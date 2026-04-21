@@ -350,6 +350,16 @@ const EventEditor = () => {
             )}
           </div>
         </Card>
+
+        {!isNew && (
+          <Card className="p-6 bg-gradient-card border-border/50 mt-6">
+            <h2 className="font-display text-xl font-bold mb-1">Door staff</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Staff you add here can scan tickets at the door for this event.
+            </p>
+            <EventStaffManager eventId={id!} />
+          </Card>
+        )}
       </div>
     </>
   );
