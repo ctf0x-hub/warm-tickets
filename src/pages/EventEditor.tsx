@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Send, Save, ArrowLeft, ScanLine } from "lucide-react";
+import { Loader2, Send, Save, ArrowLeft, ScanLine, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { EventStaffManager } from "@/components/EventStaffManager";
@@ -205,6 +205,11 @@ const EventEditor = () => {
                 <Button asChild variant="outline" size="sm">
                   <Link to={`/organizer/events/${id}/scan`}>
                     <ScanLine className="mr-1.5 h-3.5 w-3.5" /> Scan tickets
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link to={`/organizer/events/${id}/analytics`}>
+                    <BarChart3 className="mr-1.5 h-3.5 w-3.5" /> Analytics
                   </Link>
                 </Button>
               </>

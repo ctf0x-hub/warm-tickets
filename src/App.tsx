@@ -16,6 +16,7 @@ import EventDetail from "./pages/EventDetail";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import EventEditor from "./pages/EventEditor";
 import EventScan from "./pages/EventScan";
+import EventAnalytics from "./pages/EventAnalytics";
 import TicketTiers from "./pages/TicketTiers";
 import OrganizerApprovals from "./pages/OrganizerApprovals";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -52,6 +53,7 @@ const App = () => (
                   <Route path="/organizer/events/:id" element={<ProtectedRoute requireRole="organizer"><EventEditor /></ProtectedRoute>} />
                   <Route path="/organizer/events/:id/tiers" element={<ProtectedRoute requireRole="organizer"><TicketTiers /></ProtectedRoute>} />
                   <Route path="/organizer/events/:id/scan" element={<ProtectedRoute><EventScan /></ProtectedRoute>} />
+                  <Route path="/organizer/events/:id/analytics" element={<ProtectedRoute requireRole="organizer"><EventAnalytics /></ProtectedRoute>} />
                   <Route path="/organizer/approvals" element={<ProtectedRoute requireRole="organizer"><OrganizerApprovals /></ProtectedRoute>} />
 
                   <Route path="/admin" element={<ProtectedRoute requireRole="admin"><AdminDashboard /></ProtectedRoute>} />
