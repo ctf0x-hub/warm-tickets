@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,10 +63,19 @@ export const CartDrawer = () => {
   const handleCheckout = async () => {
     setBusy(true);
     try {
-      const { count: minted } = await checkout();
-      toast.success(`${minted} ticket${minted === 1 ? "" : "s"} confirmed`);
-      setOpen(false);
-      navigate("/tickets");
+      if (total === 0) {
+        // Free-only cart → instant reserve
+        const { count: minted } = await checkout();
+        toast.success(`${minted} ticket${minted === 1 ? "" : "s"} confirmed`);
+        setOpen(false);
+        navigate("/tickets");
+        return;
+      }
+      // Paid (or mixed) cart → Stripe Checkout
+      const { data, error } = await supabase.functions.invoke("create-checkout");
+      if (error) throw error;
+      if (!data?.url) throw new Error("No checkout URL returned");
+      window.location.href = data.url as string;
     } catch (e: any) {
       toast.error(e.message ?? "Checkout failed");
     } finally {
@@ -114,10 +124,12 @@ export const CartDrawer = () => {
               disabled={busy}
             >
               {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {total === 0 ? "Reserve free tickets" : "Checkout (stub)"}
+              {total === 0 ? "Reserve free tickets" : "Pay with Stripe"}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
-              Stub checkout — no payment in Phase 2.
+              {total === 0
+                ? "Free tickets are reserved instantly."
+                : "Secure payment via Stripe (test mode)."}
             </p>
           </div>
         )}

@@ -21,6 +21,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminApprovals from "./pages/AdminApprovals";
 import AdminTaxonomy from "./pages/AdminTaxonomy";
 import MyTickets from "./pages/MyTickets";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
+import CheckoutCancel from "./pages/CheckoutCancel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +43,8 @@ const App = () => (
                   <Route path="/events" element={<EventsCatalog />} />
                   <Route path="/events/:slug" element={<EventDetail />} />
                   <Route path="/tickets" element={<ProtectedRoute><MyTickets /></ProtectedRoute>} />
+                  <Route path="/checkout/success" element={<ProtectedRoute><CheckoutSuccess /></ProtectedRoute>} />
+                  <Route path="/checkout/cancel" element={<ProtectedRoute><CheckoutCancel /></ProtectedRoute>} />
 
                   <Route path="/organizer" element={<ProtectedRoute><OrganizerDashboard /></ProtectedRoute>} />
                   <Route path="/organizer/events/new" element={<ProtectedRoute requireRole="organizer"><EventEditor /></ProtectedRoute>} />
