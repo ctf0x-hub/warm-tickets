@@ -99,6 +99,41 @@ export type Database = {
           },
         ]
       }
+      event_staff: {
+        Row: {
+          added_by: string
+          created_at: string
+          event_id: string
+          id: string
+          invited_email: string
+          user_id: string
+        }
+        Insert: {
+          added_by: string
+          created_at?: string
+          event_id: string
+          id?: string
+          invited_email: string
+          user_id: string
+        }
+        Update: {
+          added_by?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          invited_email?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_staff_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_tag_map: {
         Row: {
           event_id: string
@@ -337,6 +372,7 @@ export type Database = {
       tickets: {
         Row: {
           checked_in_at: string | null
+          checked_in_by: string | null
           created_at: string
           event_id: string
           id: string
@@ -347,6 +383,7 @@ export type Database = {
         }
         Insert: {
           checked_in_at?: string | null
+          checked_in_by?: string | null
           created_at?: string
           event_id: string
           id?: string
@@ -357,6 +394,7 @@ export type Database = {
         }
         Update: {
           checked_in_at?: string | null
+          checked_in_by?: string | null
           created_at?: string
           event_id?: string
           id?: string
@@ -408,12 +446,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_event_staff_by_email: {
+        Args: { _email: string; _event_id: string }
+        Returns: Json
+      }
       available_seats: { Args: { _tier_id: string }; Returns: number }
       become_organizer: { Args: never; Returns: undefined }
+      can_scan_event: {
+        Args: { _event_id: string; _user_id: string }
+        Returns: boolean
+      }
+      check_in_ticket: {
+        Args: { _event_id: string; _qr_code: string }
+        Returns: Json
+      }
       checkout_cart: {
         Args: never
         Returns: {
           checked_in_at: string | null
+          checked_in_by: string | null
           created_at: string
           event_id: string
           id: string
@@ -433,6 +484,7 @@ export type Database = {
         Args: { _session_id: string }
         Returns: {
           checked_in_at: string | null
+          checked_in_by: string | null
           created_at: string
           event_id: string
           id: string
@@ -454,6 +506,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_event_staff: {
+        Args: { _event_id: string; _user_id: string }
         Returns: boolean
       }
       release_cart_by_session: {
