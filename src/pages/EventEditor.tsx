@@ -16,9 +16,10 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Send, Save, ArrowLeft } from "lucide-react";
+import { Loader2, Send, Save, ArrowLeft, ScanLine } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { EventStaffManager } from "@/components/EventStaffManager";
 
 const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80) +
@@ -195,11 +196,18 @@ const EventEditor = () => {
           <h1 className="font-display text-3xl font-bold">
             {isNew ? "Create event" : "Edit event"}
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {!isNew && (
-              <Button asChild variant="outline" size="sm">
-                <Link to={`/organizer/events/${id}/tiers`}>Manage tiers</Link>
-              </Button>
+              <>
+                <Button asChild variant="outline" size="sm">
+                  <Link to={`/organizer/events/${id}/tiers`}>Manage tiers</Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link to={`/organizer/events/${id}/scan`}>
+                    <ScanLine className="mr-1.5 h-3.5 w-3.5" /> Scan tickets
+                  </Link>
+                </Button>
+              </>
             )}
             {!isNew && <Badge variant="outline">{form.status.replace(/_/g, " ")}</Badge>}
           </div>
@@ -342,6 +350,16 @@ const EventEditor = () => {
             )}
           </div>
         </Card>
+
+        {!isNew && (
+          <Card className="p-6 bg-gradient-card border-border/50 mt-6">
+            <h2 className="font-display text-xl font-bold mb-1">Door staff</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Staff you add here can scan tickets at the door for this event.
+            </p>
+            <EventStaffManager eventId={id!} />
+          </Card>
+        )}
       </div>
     </>
   );
