@@ -5,10 +5,83 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar, MapPin } from "lucide-react";
+import { Loader2, Calendar, MapPin, CheckCircle2, XCircle, Eye, EyeOff } from "lucide-react";
 import { format } from "date-fns";
 import { QRCodeSVG } from "qrcode.react";
 import { Helmet } from "react-helmet-async";
+
+const TicketCard = ({ t }: { t: any }) => {
+  const [showCode, setShowCode] = useState(false);
+  const inactive = t.status === "checked_in" || t.status === "cancelled";
+
+  return (
+    <Card className="overflow-hidden bg-gradient-card border-border/50">
+      <div className="grid sm:grid-cols-[1fr_auto] gap-6 p-6">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <Badge className="bg-primary/15 text-primary border-primary/30">
+              {t.ticket_tiers?.name}
+            </Badge>
+            {t.status === "checked_in" && (
+              <Badge className="bg-success/20 text-success border-success/40">
+                <CheckCircle2 className="h-3 w-3 mr-1" /> Checked in
+              </Badge>
+            )}
+            {t.status === "cancelled" && (
+              <Badge variant="destructive">
+                <XCircle className="h-3 w-3 mr-1" /> Cancelled
+              </Badge>
+            )}
+          </div>
+          <Link to={`/events/${t.events?.slug}`}>
+            <h2 className="font-display text-2xl font-bold hover:text-primary transition-smooth">
+              {t.events?.title}
+            </h2>
+          </Link>
+          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mt-3">
+            {t.events?.starts_at && (
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-4 w-4 text-primary" />
+                {format(new Date(t.events.starts_at), "EEE, MMM d · h:mm a")}
+              </div>
+            )}
+            {(t.events?.venue || t.events?.city) && (
+              <div className="flex items-center gap-1.5">
+                <MapPin className="h-4 w-4 text-primary" />
+                {[t.events.venue, t.events.city].filter(Boolean).join(", ")}
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowCode((v) => !v)}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mt-4 transition-smooth"
+          >
+            {showCode ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+            {showCode ? "Hide code" : "Show code (manual entry)"}
+          </button>
+          {showCode && (
+            <p className="text-xs text-muted-foreground mt-2 font-mono break-all select-all">
+              {t.qr_code}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col items-center gap-2 mx-auto sm:mx-0">
+          <div
+            className={`bg-white p-4 rounded-2xl shadow-card flex items-center justify-center ${
+              inactive ? "opacity-30 grayscale" : ""
+            }`}
+          >
+            <QRCodeSVG value={t.qr_code} size={176} level="M" />
+          </div>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {inactive ? "Not valid" : "Show at the door"}
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+};
 
 const MyTickets = () => {
   const { user } = useAuth();
@@ -53,48 +126,7 @@ const MyTickets = () => {
         ) : (
           <div className="grid gap-4">
             {tickets.map((t) => (
-              <Card key={t.id} className="overflow-hidden bg-gradient-card border-border/50">
-                <div className="grid sm:grid-cols-[1fr_auto] gap-6 p-6">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge className="bg-primary/15 text-primary border-primary/30">
-                        {t.ticket_tiers?.name}
-                      </Badge>
-                      {t.status === "checked_in" && (
-                        <Badge variant="secondary">Checked in</Badge>
-                      )}
-                      {t.status === "cancelled" && (
-                        <Badge variant="destructive">Cancelled</Badge>
-                      )}
-                    </div>
-                    <Link to={`/events/${t.events?.slug}`}>
-                      <h2 className="font-display text-2xl font-bold hover:text-primary transition-smooth">
-                        {t.events?.title}
-                      </h2>
-                    </Link>
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mt-3">
-                      {t.events?.starts_at && (
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="h-4 w-4 text-primary" />
-                          {format(new Date(t.events.starts_at), "EEE, MMM d · h:mm a")}
-                        </div>
-                      )}
-                      {(t.events?.venue || t.events?.city) && (
-                        <div className="flex items-center gap-1.5">
-                          <MapPin className="h-4 w-4 text-primary" />
-                          {[t.events.venue, t.events.city].filter(Boolean).join(", ")}
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-4 font-mono break-all">
-                      {t.qr_code}
-                    </p>
-                  </div>
-                  <div className="bg-white p-3 rounded-xl flex items-center justify-center">
-                    <QRCodeSVG value={t.qr_code} size={128} />
-                  </div>
-                </div>
-              </Card>
+              <TicketCard key={t.id} t={t} />
             ))}
           </div>
         )}
