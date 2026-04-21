@@ -500,6 +500,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      event_analytics: { Args: { _event_id: string }; Returns: Json }
       expire_stale_reservations: { Args: never; Returns: undefined }
       has_role: {
         Args: {
