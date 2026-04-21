@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      cart_reservations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          quantity: number
+          tier_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          quantity: number
+          tier_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          quantity?: number
+          tier_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_reservations_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_approval_requests: {
         Row: {
           created_at: string
@@ -237,6 +272,113 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_tiers: {
+        Row: {
+          created_at: string
+          currency: string
+          description: string | null
+          event_id: string
+          id: string
+          max_per_order: number
+          name: string
+          price_cents: number
+          sales_end_at: string | null
+          sales_start_at: string | null
+          sold_seats: number
+          sort_order: number
+          total_seats: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          event_id: string
+          id?: string
+          max_per_order?: number
+          name: string
+          price_cents?: number
+          sales_end_at?: string | null
+          sales_start_at?: string | null
+          sold_seats?: number
+          sort_order?: number
+          total_seats: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          event_id?: string
+          id?: string
+          max_per_order?: number
+          name?: string
+          price_cents?: number
+          sales_end_at?: string | null
+          sales_start_at?: string | null
+          sold_seats?: number
+          sort_order?: number
+          total_seats?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_tiers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          checked_in_at: string | null
+          created_at: string
+          event_id: string
+          id: string
+          qr_code: string
+          status: Database["public"]["Enums"]["ticket_status"]
+          tier_id: string
+          user_id: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          qr_code?: string
+          status?: Database["public"]["Enums"]["ticket_status"]
+          tier_id: string
+          user_id: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          qr_code?: string
+          status?: Database["public"]["Enums"]["ticket_status"]
+          tier_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -263,7 +405,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      available_seats: { Args: { _tier_id: string }; Returns: number }
       become_organizer: { Args: never; Returns: undefined }
+      checkout_cart: {
+        Args: never
+        Returns: {
+          checked_in_at: string | null
+          created_at: string
+          event_id: string
+          id: string
+          qr_code: string
+          status: Database["public"]["Enums"]["ticket_status"]
+          tier_id: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "tickets"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      expire_stale_reservations: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -284,6 +447,7 @@ export type Database = {
         | "pending_edit_approval"
         | "cancelled"
         | "rejected"
+      ticket_status: "valid" | "cancelled" | "checked_in"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -423,6 +587,7 @@ export const Constants = {
         "cancelled",
         "rejected",
       ],
+      ticket_status: ["valid", "cancelled", "checked_in"],
     },
   },
 } as const

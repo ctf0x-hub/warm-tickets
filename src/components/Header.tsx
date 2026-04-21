@@ -1,7 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LogOut, LayoutDashboard, Shield, User } from "lucide-react";
+import { Sparkles, LogOut, LayoutDashboard, Shield, User, Ticket } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CartDrawer } from "@/components/CartDrawer";
 
 export const Header = () => {
   const { user, isAdmin, isOrganizer, signOut } = useAuth();
@@ -76,6 +77,7 @@ export const Header = () => {
         </nav>
 
         <div className="flex items-center gap-2">
+          {user && <CartDrawer />}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -87,8 +89,8 @@ export const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  <User className="mr-2 h-4 w-4" /> Profile
+                <DropdownMenuItem onClick={() => navigate("/tickets")}>
+                  <Ticket className="mr-2 h-4 w-4" /> My tickets
                 </DropdownMenuItem>
                 {isOrganizer && (
                   <DropdownMenuItem onClick={() => navigate("/organizer")}>

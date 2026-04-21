@@ -195,7 +195,14 @@ const EventEditor = () => {
           <h1 className="font-display text-3xl font-bold">
             {isNew ? "Create event" : "Edit event"}
           </h1>
-          {!isNew && <Badge variant="outline">{form.status.replace(/_/g, " ")}</Badge>}
+          <div className="flex items-center gap-2">
+            {!isNew && (
+              <Button asChild variant="outline" size="sm">
+                <Link to={`/organizer/events/${id}/tiers`}>Manage tiers</Link>
+              </Button>
+            )}
+            {!isNew && <Badge variant="outline">{form.status.replace(/_/g, " ")}</Badge>}
+          </div>
         </div>
 
         <Card className="p-6 bg-gradient-card border-border/50 space-y-5">

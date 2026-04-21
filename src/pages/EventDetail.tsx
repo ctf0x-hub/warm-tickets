@@ -6,6 +6,7 @@ import { Calendar, MapPin, Loader2, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet-async";
+import { TierList } from "@/components/TierList";
 
 const EventDetail = () => {
   const { slug } = useParams();
@@ -136,12 +137,11 @@ const EventDetail = () => {
             <aside className="lg:sticky lg:top-24 self-start">
               <div className="rounded-2xl border border-border/50 bg-gradient-card p-6 shadow-card">
                 <h3 className="font-display font-semibold text-lg mb-4">Tickets</h3>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Ticketing & checkout coming in Phase 2. Stay tuned.
-                </p>
-                <Button disabled className="w-full bg-gradient-primary border-0 opacity-60">
-                  Get tickets — soon
-                </Button>
+                {!isPast ? (
+                  <TierList eventId={event.id} />
+                ) : (
+                  <p className="text-sm text-muted-foreground">This event has ended.</p>
+                )}
                 {event.profiles?.name && (
                   <p className="text-xs text-muted-foreground mt-6 pt-6 border-t border-border/50">
                     Organized by <span className="text-foreground">{event.profiles.name}</span>
