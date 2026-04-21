@@ -14,16 +14,276 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      event_approval_requests: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          organizer_id: string
+          request_type: Database["public"]["Enums"]["approval_request_type"]
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          snapshot: Json
+          status: Database["public"]["Enums"]["approval_status"]
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          organizer_id: string
+          request_type: Database["public"]["Enums"]["approval_request_type"]
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          snapshot: Json
+          status?: Database["public"]["Enums"]["approval_status"]
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          organizer_id?: string
+          request_type?: Database["public"]["Enums"]["approval_request_type"]
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          snapshot?: Json
+          status?: Database["public"]["Enums"]["approval_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_approval_requests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_tag_map: {
+        Row: {
+          event_id: string
+          tag_id: string
+        }
+        Insert: {
+          event_id: string
+          tag_id: string
+        }
+        Update: {
+          event_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_tag_map_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_tag_map_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "event_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      event_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          banner_image: string | null
+          city: string | null
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          ends_at: string
+          id: string
+          organizer_id: string
+          rejection_reason: string | null
+          search_vector: unknown
+          slug: string
+          starts_at: string
+          status: Database["public"]["Enums"]["event_status"]
+          title: string
+          type_id: string | null
+          updated_at: string
+          venue: string | null
+        }
+        Insert: {
+          banner_image?: string | null
+          city?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          ends_at: string
+          id?: string
+          organizer_id: string
+          rejection_reason?: string | null
+          search_vector?: unknown
+          slug: string
+          starts_at: string
+          status?: Database["public"]["Enums"]["event_status"]
+          title: string
+          type_id?: string | null
+          updated_at?: string
+          venue?: string | null
+        }
+        Update: {
+          banner_image?: string | null
+          city?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          ends_at?: string
+          id?: string
+          organizer_id?: string
+          rejection_reason?: string | null
+          search_vector?: unknown
+          slug?: string
+          starts_at?: string
+          status?: Database["public"]["Enums"]["event_status"]
+          title?: string
+          type_id?: string | null
+          updated_at?: string
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_type_id_fkey"
+            columns: ["type_id"]
+            isOneToOne: false
+            referencedRelation: "event_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          email: string
+          id: string
+          is_suspended: boolean
+          name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          email: string
+          id?: string
+          is_suspended?: boolean
+          name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          email?: string
+          id?: string
+          is_suspended?: boolean
+          name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      become_organizer: { Args: never; Returns: undefined }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "attendee" | "organizer" | "admin"
+      approval_request_type: "publish" | "edit"
+      approval_status: "pending" | "approved" | "rejected"
+      event_status:
+        | "draft"
+        | "pending_approval"
+        | "approved"
+        | "published"
+        | "pending_edit_approval"
+        | "cancelled"
+        | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +410,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["attendee", "organizer", "admin"],
+      approval_request_type: ["publish", "edit"],
+      approval_status: ["pending", "approved", "rejected"],
+      event_status: [
+        "draft",
+        "pending_approval",
+        "approved",
+        "published",
+        "pending_edit_approval",
+        "cancelled",
+        "rejected",
+      ],
+    },
   },
 } as const
