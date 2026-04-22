@@ -21,22 +21,24 @@ const AdminApprovals = () => {
     setLoading(true);
 
     // 1) Real pending requests
-    const { data: requests } = await supabase
+    const { data: requests, error: reqErr } = await supabase
       .from("event_approval_requests")
-      .select("*, events(title, slug, organizer_id, status), profiles!event_approval_requests_organizer_id_fkey(name, email)")
+      .select("*, events(title, slug, organizer_id, status)")
       .eq("status", "pending")
       .order("created_at", { ascending: true });
+    if (reqErr) console.error("approvals: requests error", reqErr);
 
     const requested = requests ?? [];
     const requestedEventIds = new Set(requested.map((r: any) => r.event_id));
 
     // 2) Orphan pending events (status set directly without a request row)
-    const { data: orphanEvents } = await supabase
+    const { data: orphanEvents, error: orphErr } = await supabase
       .from("events")
-      .select("id, title, slug, organizer_id, status, created_at, venue, city, starts_at, ends_at, description, profiles:profiles!events_organizer_id_fkey(name, email)")
+      .select("id, title, slug, organizer_id, status, created_at, venue, city, starts_at, ends_at, description")
       .in("status", ["pending_approval", "pending_edit_approval"])
       .is("deleted_at", null)
       .order("created_at", { ascending: true });
+    if (orphErr) console.error("approvals: orphan events error", orphErr);
 
     const orphans = (orphanEvents ?? [])
       .filter((e: any) => !requestedEventIds.has(e.id))
@@ -53,11 +55,23 @@ const AdminApprovals = () => {
           description: e.description,
         },
         events: { title: e.title, slug: e.slug, organizer_id: e.organizer_id, status: e.status },
-        profiles: e.profiles,
+        profiles: null,
         _orphan: true,
       }));
 
-    setReqs([...requested, ...orphans]);
+    // 3) Fetch organizer profiles separately (no FK between events/requests and profiles)
+    const merged = [...requested, ...orphans];
+    const organizerIds = Array.from(new Set(merged.map((r: any) => r.organizer_id).filter(Boolean)));
+    if (organizerIds.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, name, email")
+        .in("user_id", organizerIds);
+      const byId = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+      merged.forEach((r: any) => { r.profiles = byId.get(r.organizer_id) ?? null; });
+    }
+
+    setReqs(merged);
     setLoading(false);
   };
 
