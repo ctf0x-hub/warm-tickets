@@ -113,21 +113,6 @@ const Auth = () => {
                 className="mt-1.5"
               />
             </div>
-            {mode === "signup" && (
-              <label className="flex items-start gap-3 rounded-lg border border-border/50 bg-muted/30 p-3 cursor-pointer">
-                <Checkbox
-                  checked={asOrganizer}
-                  onCheckedChange={(v) => setAsOrganizer(v === true)}
-                  className="mt-0.5"
-                />
-                <span className="text-sm">
-                  <span className="font-medium block">I want to organize events</span>
-                  <span className="text-muted-foreground text-xs">
-                    Activates an organizer account so you can create and publish events.
-                  </span>
-                </span>
-              </label>
-            )}
             <Button
               type="submit"
               disabled={loading}
