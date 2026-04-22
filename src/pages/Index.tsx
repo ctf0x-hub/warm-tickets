@@ -64,7 +64,7 @@ const Index = () => {
                 variant="outline"
                 className="h-12 px-8 border-border/60 hover:bg-muted text-base"
               >
-                <Link to="/auth?mode=signup&as=organizer">Become an organizer</Link>
+                <Link to="/organizer">Become an organizer</Link>
               </Button>
             </div>
           </div>
