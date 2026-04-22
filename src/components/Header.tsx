@@ -92,9 +92,13 @@ export const Header = () => {
                 <DropdownMenuItem onClick={() => navigate("/tickets")}>
                   <Ticket className="mr-2 h-4 w-4" /> My tickets
                 </DropdownMenuItem>
-                {isOrganizer && (
+                {isOrganizer ? (
                   <DropdownMenuItem onClick={() => navigate("/organizer")}>
                     <LayoutDashboard className="mr-2 h-4 w-4" /> Organizer dashboard
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={() => navigate("/organizer")}>
+                    <Rocket className="mr-2 h-4 w-4" /> Become organizer
                   </DropdownMenuItem>
                 )}
                 {isAdmin && (
