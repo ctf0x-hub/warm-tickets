@@ -145,7 +145,7 @@ const EventEditor = () => {
       const { data: ev } = await supabase.from("events").select("*").eq("id", id).single();
       if (!ev) throw new Error("Event not found");
 
-      const isEdit = ev.status === "published";
+      const isEdit = ev.status === "published" || ev.status === "approved";
       const newStatus = isEdit ? "pending_edit_approval" : "pending_approval";
 
       const { error: reqErr } = await supabase.from("event_approval_requests").insert({
@@ -180,7 +180,8 @@ const EventEditor = () => {
     );
   }
 
-  const canSubmit = !isNew && (form.status === "draft" || form.status === "rejected" || form.status === "published");
+  const isLive = form.status === "published" || form.status === "approved";
+  const canSubmit = !isNew && (form.status === "draft" || form.status === "rejected" || isLive);
 
   return (
     <>
