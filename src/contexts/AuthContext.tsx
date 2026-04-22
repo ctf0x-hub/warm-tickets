@@ -32,13 +32,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    const maybePromoteOrganizer = async (sess: Session) => {
+      const wants = (sess.user.user_metadata as any)?.wants_organizer;
+      if (!wants) return;
+      const { error } = await supabase.rpc("become_organizer");
+      if (!error) {
+        // Clear the flag so we don't re-run on every session refresh.
+        await supabase.auth.updateUser({ data: { wants_organizer: false } });
+        await fetchRoles(sess.user.id);
+      }
+    };
+
     // Set up listener FIRST
     const { data: sub } = supabase.auth.onAuthStateChange((_e, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
         // defer
-        setTimeout(() => fetchRoles(sess.user.id), 0);
+        setTimeout(() => {
+          fetchRoles(sess.user.id);
+          maybePromoteOrganizer(sess);
+        }, 0);
       } else {
         setRoles([]);
       }
@@ -47,8 +61,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      if (sess?.user) fetchRoles(sess.user.id).finally(() => setLoading(false));
-      else setLoading(false);
+      if (sess?.user) {
+        fetchRoles(sess.user.id).finally(() => setLoading(false));
+        maybePromoteOrganizer(sess);
+      } else setLoading(false);
     });
 
     return () => sub.subscription.unsubscribe();

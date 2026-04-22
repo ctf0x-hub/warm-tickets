@@ -27,17 +27,27 @@ const Auth = () => {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
-            data: { name },
+            data: { name, wants_organizer: asOrganizer },
           },
         });
         if (error) throw error;
+
+        // If email confirmation is required, no session exists yet.
+        if (!data.session) {
+          toast.success("Check your email", {
+            description: asOrganizer
+              ? "Confirm your email to activate your organizer account."
+              : "Confirm your email to finish signing in.",
+          });
+          return;
+        }
+
         if (asOrganizer) {
-          // Session is established immediately (auto-confirm on); promote to organizer.
           const { error: rpcErr } = await supabase.rpc("become_organizer");
           if (rpcErr) {
             toast.warning("Signed up, but couldn't activate organizer role", {
