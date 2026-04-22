@@ -27,35 +27,19 @@ const Auth = () => {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
-            data: { name, wants_organizer: asOrganizer },
+            data: { name },
           },
         });
         if (error) throw error;
 
-        // If email confirmation is required, no session exists yet.
         if (!data.session) {
           toast.success("Check your email", {
-            description: asOrganizer
-              ? "Confirm your email to activate your organizer account."
-              : "Confirm your email to finish signing in.",
+            description: "Confirm your email to finish signing in.",
           });
           return;
         }
 
-        if (asOrganizer) {
-          const { error: rpcErr } = await supabase.rpc("become_organizer");
-          if (rpcErr) {
-            toast.warning("Signed up, but couldn't activate organizer role", {
-              description: rpcErr.message,
-            });
-          } else {
-            toast.success("Welcome to PULSE!", { description: "Organizer account ready." });
-            navigate("/organizer");
-            return;
-          }
-        } else {
-          toast.success("Welcome to PULSE!", { description: "You're signed in." });
-        }
+        toast.success("Welcome to PULSE!", { description: "You're signed in." });
         navigate("/");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
