@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2, Sparkles } from "lucide-react";
 import { Helmet } from "react-helmet-async";
@@ -13,10 +14,12 @@ const Auth = () => {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const initialMode = params.get("mode") === "signup" ? "signup" : "signin";
+  const wantsOrganizer = params.get("as") === "organizer";
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [asOrganizer, setAsOrganizer] = useState(wantsOrganizer);
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -33,7 +36,21 @@ const Auth = () => {
           },
         });
         if (error) throw error;
-        toast.success("Welcome to PULSE!", { description: "You're signed in." });
+        if (asOrganizer) {
+          // Session is established immediately (auto-confirm on); promote to organizer.
+          const { error: rpcErr } = await supabase.rpc("become_organizer");
+          if (rpcErr) {
+            toast.warning("Signed up, but couldn't activate organizer role", {
+              description: rpcErr.message,
+            });
+          } else {
+            toast.success("Welcome to PULSE!", { description: "Organizer account ready." });
+            navigate("/organizer");
+            return;
+          }
+        } else {
+          toast.success("Welcome to PULSE!", { description: "You're signed in." });
+        }
         navigate("/");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
