@@ -351,7 +351,7 @@ const EventEditor = () => {
               >
                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <Send className="mr-2 h-4 w-4" />
-                {form.status === "published" ? "Submit edit for review" : "Submit for approval"}
+                {isLive ? "Submit edit for review" : "Submit for approval"}
               </Button>
             )}
           </div>
