@@ -19,12 +19,45 @@ const AdminApprovals = () => {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
+
+    // 1) Real pending requests
+    const { data: requests } = await supabase
       .from("event_approval_requests")
-      .select("*, events(title, slug, organizer_id), profiles!event_approval_requests_organizer_id_fkey(name, email)")
+      .select("*, events(title, slug, organizer_id, status), profiles!event_approval_requests_organizer_id_fkey(name, email)")
       .eq("status", "pending")
       .order("created_at", { ascending: true });
-    setReqs(data ?? []);
+
+    const requested = requests ?? [];
+    const requestedEventIds = new Set(requested.map((r: any) => r.event_id));
+
+    // 2) Orphan pending events (status set directly without a request row)
+    const { data: orphanEvents } = await supabase
+      .from("events")
+      .select("id, title, slug, organizer_id, status, created_at, venue, city, starts_at, ends_at, description, profiles:profiles!events_organizer_id_fkey(name, email)")
+      .in("status", ["pending_approval", "pending_edit_approval"])
+      .is("deleted_at", null)
+      .order("created_at", { ascending: true });
+
+    const orphans = (orphanEvents ?? [])
+      .filter((e: any) => !requestedEventIds.has(e.id))
+      .map((e: any) => ({
+        id: `orphan-${e.id}`,
+        event_id: e.id,
+        organizer_id: e.organizer_id,
+        request_type: e.status === "pending_edit_approval" ? "edit" : "publish",
+        status: "pending",
+        created_at: e.created_at,
+        snapshot: {
+          venue: e.venue, city: e.city,
+          starts_at: e.starts_at, ends_at: e.ends_at,
+          description: e.description,
+        },
+        events: { title: e.title, slug: e.slug, organizer_id: e.organizer_id, status: e.status },
+        profiles: e.profiles,
+        _orphan: true,
+      }));
+
+    setReqs([...requested, ...orphans]);
     setLoading(false);
   };
 
@@ -36,24 +69,26 @@ const AdminApprovals = () => {
     try {
       const note = notes[req.id]?.trim() || null;
 
-      const { error: reqErr } = await supabase
-        .from("event_approval_requests")
-        .update({
-          status: approve ? "approved" : "rejected",
-          reviewed_by: user.id,
-          review_note: note,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", req.id);
-      if (reqErr) throw reqErr;
+      if (!req._orphan) {
+        const { error: reqErr } = await supabase
+          .from("event_approval_requests")
+          .update({
+            status: approve ? "approved" : "rejected",
+            reviewed_by: user.id,
+            review_note: note,
+            reviewed_at: new Date().toISOString(),
+          })
+          .eq("id", req.id);
+        if (reqErr) throw reqErr;
+      }
 
       // Update event status
       let newEventStatus: string;
       if (approve) {
-        newEventStatus = "published";
+        newEventStatus = "approved";
       } else {
-        // rejection: edit-requests revert to published, publish-requests go to draft
-        newEventStatus = req.request_type === "edit" ? "published" : "draft";
+        // rejection: edit-requests revert to approved (live), publish-requests go to draft
+        newEventStatus = req.request_type === "edit" ? "approved" : "draft";
       }
 
       const updates: any = { status: newEventStatus };
