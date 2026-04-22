@@ -69,16 +69,18 @@ const AdminApprovals = () => {
     try {
       const note = notes[req.id]?.trim() || null;
 
-      const { error: reqErr } = await supabase
-        .from("event_approval_requests")
-        .update({
-          status: approve ? "approved" : "rejected",
-          reviewed_by: user.id,
-          review_note: note,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", req.id);
-      if (reqErr) throw reqErr;
+      if (!req._orphan) {
+        const { error: reqErr } = await supabase
+          .from("event_approval_requests")
+          .update({
+            status: approve ? "approved" : "rejected",
+            reviewed_by: user.id,
+            review_note: note,
+            reviewed_at: new Date().toISOString(),
+          })
+          .eq("id", req.id);
+        if (reqErr) throw reqErr;
+      }
 
       // Update event status
       let newEventStatus: string;
