@@ -1,7 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LogOut, LayoutDashboard, Shield, User, Ticket } from "lucide-react";
+import { Sparkles, LogOut, LayoutDashboard, Shield, Ticket, Rocket } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
