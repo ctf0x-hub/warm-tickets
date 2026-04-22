@@ -67,7 +67,7 @@ const EventsCatalog = () => {
         .select(
           "id, title, slug, venue, city, starts_at, ends_at, banner_image, type_id, event_types(name), event_tag_map(event_tags(name))"
         )
-        .eq("status", "published")
+        .in("status", ["published", "approved"])
         .is("deleted_at", null);
 
       if (tab === "upcoming") query = query.gt("starts_at", now);

@@ -21,7 +21,7 @@ const EventDetail = () => {
         "*, event_types(name), event_tag_map(event_tags(name)), profiles!events_organizer_id_fkey(name)"
       )
       .eq("slug", slug)
-      .eq("status", "published")
+      .in("status", ["published", "approved"])
       .is("deleted_at", null)
       .maybeSingle()
       .then(({ data }) => {

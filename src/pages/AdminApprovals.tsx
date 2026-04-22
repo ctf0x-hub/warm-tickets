@@ -50,10 +50,10 @@ const AdminApprovals = () => {
       // Update event status
       let newEventStatus: string;
       if (approve) {
-        newEventStatus = "published";
+        newEventStatus = "approved";
       } else {
-        // rejection: edit-requests revert to published, publish-requests go to draft
-        newEventStatus = req.request_type === "edit" ? "published" : "draft";
+        // rejection: edit-requests revert to approved (live), publish-requests go to draft
+        newEventStatus = req.request_type === "edit" ? "approved" : "draft";
       }
 
       const updates: any = { status: newEventStatus };
