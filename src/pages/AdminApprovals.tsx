@@ -89,6 +89,23 @@ const AdminApprovals = () => {
       merged.forEach((r: any) => { r.profiles = byId.get(r.organizer_id) ?? null; });
     }
 
+    // 4) Fetch ticket tiers for each event
+    const allEventIds = Array.from(new Set(merged.map((r: any) => r.event_id)));
+    if (allEventIds.length) {
+      const { data: tiers } = await supabase
+        .from("ticket_tiers")
+        .select("id, event_id, name, description, price_cents, currency, total_seats, sold_seats, sort_order")
+        .in("event_id", allEventIds)
+        .order("sort_order", { ascending: true });
+      const tiersByEvent = new Map<string, any[]>();
+      (tiers ?? []).forEach((t: any) => {
+        const arr = tiersByEvent.get(t.event_id) ?? [];
+        arr.push(t);
+        tiersByEvent.set(t.event_id, arr);
+      });
+      merged.forEach((r: any) => { r.tiers = tiersByEvent.get(r.event_id) ?? []; });
+    }
+
     setReqs(merged);
     setLoading(false);
   };
