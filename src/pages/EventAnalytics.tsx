@@ -14,6 +14,8 @@ import {
   CheckCircle2,
   XCircle,
   TrendingUp,
+  Pencil,
+  ScanLine,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -209,8 +211,8 @@ const EventAnalytics = () => {
       </Helmet>
       <div className="container max-w-6xl py-8">
         <Button asChild variant="ghost" size="sm" className="mb-4">
-          <Link to={`/organizer/events/${eventId}`}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to event
+          <Link to="/organizer">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to dashboard
           </Link>
         </Button>
 
@@ -221,9 +223,21 @@ const EventAnalytics = () => {
             </p>
             <h1 className="font-display text-3xl font-bold">{eventTitle}</h1>
           </div>
-          <Badge variant="outline" className="text-xs">
-            Auto-refreshing every 30s
-          </Badge>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button asChild variant="outline" size="sm">
+              <Link to={`/organizer/events/${eventId}`}>
+                <Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link to={`/organizer/events/${eventId}/scan`}>
+                <ScanLine className="mr-1.5 h-3.5 w-3.5" /> Scan tickets
+              </Link>
+            </Button>
+            <Badge variant="outline" className="text-xs">
+              Auto-refreshing every 30s
+            </Badge>
+          </div>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
