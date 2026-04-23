@@ -172,8 +172,25 @@ const AdminApprovals = () => {
           <div className="space-y-4">
             {reqs.map((r) => {
               const snap = r.snapshot || {};
+              const banner = snap.banner_image || r.events?.banner_image;
+              const tiers = r.tiers || [];
+              const fmtMoney = (cents: number, currency?: string) => {
+                const cur = (currency || "BDT").toUpperCase();
+                const amount = (cents || 0) / 100;
+                if (cur === "BDT") return `৳${amount.toLocaleString("en-BD", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+                try {
+                  return new Intl.NumberFormat("en-US", { style: "currency", currency: cur }).format(amount);
+                } catch {
+                  return `${cur} ${amount.toFixed(2)}`;
+                }
+              };
               return (
-                <Card key={r.id} className="p-6 bg-gradient-card border-border/50">
+                <Card key={r.id} className="p-6 bg-gradient-card border-border/50 overflow-hidden">
+                  {banner && (
+                    <div className="mb-4 -mx-6 -mt-6 overflow-hidden border-b border-border/40">
+                      <img src={banner} alt={r.events?.title || "Event banner"} className="w-full h-48 object-cover" loading="lazy" />
+                    </div>
+                  )}
                   <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
                     <div>
                       <Badge className="mb-2 bg-primary/15 text-primary border-primary/30 capitalize">{r.request_type} request</Badge>
@@ -182,6 +199,16 @@ const AdminApprovals = () => {
                         by {r.profiles?.name || r.profiles?.email} · {format(new Date(r.created_at), "MMM d, yyyy h:mm a")}
                       </p>
                     </div>
+                    {r.events?.slug && (
+                      <a
+                        href={`/events/${r.events.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        Preview ↗
+                      </a>
+                    )}
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-3 text-sm mb-4 p-4 rounded-lg bg-muted/40 border border-border/40">
@@ -193,6 +220,40 @@ const AdminApprovals = () => {
                       <div className="sm:col-span-2 pt-2 border-t border-border/40">
                         <span className="text-muted-foreground text-xs uppercase tracking-wider">Description</span>
                         <p className="mt-1 whitespace-pre-wrap">{snap.description}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mb-4">
+                    <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                      Ticket tiers ({tiers.length})
+                    </h4>
+                    {tiers.length === 0 ? (
+                      <p className="text-sm text-muted-foreground italic p-3 rounded-lg bg-muted/30 border border-dashed border-border/40">
+                        No ticket tiers configured yet.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {tiers.map((t: any) => (
+                          <div key={t.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-muted/40 border border-border/40">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-medium">{t.name}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {t.sold_seats}/{t.total_seats} sold
+                                </Badge>
+                              </div>
+                              {t.description && (
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{t.description}</p>
+                              )}
+                            </div>
+                            <div className="text-right shrink-0">
+                              <div className="font-display font-bold text-primary">
+                                {t.price_cents === 0 ? "Free" : fmtMoney(t.price_cents, t.currency)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
