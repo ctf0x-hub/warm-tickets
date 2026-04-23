@@ -34,7 +34,7 @@ const ItemRow = ({ item, onRemove }: { item: any; onRemove: () => void }) => {
           </p>
           <p className="font-semibold truncate">{item.tier?.name}</p>
           <p className="text-sm text-muted-foreground mt-1">
-            {item.quantity} × {formatPrice(item.tier?.price_cents ?? 0, item.tier?.currency ?? "USD")}
+            {item.quantity} × {formatPrice(item.tier?.price_cents ?? 0, item.tier?.currency ?? "BDT")}
           </p>
         </div>
         <Button variant="ghost" size="icon" onClick={onRemove}>
@@ -58,7 +58,7 @@ export const CartDrawer = () => {
     (s, i) => s + (i.tier?.price_cents ?? 0) * i.quantity,
     0
   );
-  const currency = items[0]?.tier?.currency ?? "USD";
+  const currency = items[0]?.tier?.currency ?? "BDT";
 
   const handleCheckout = async () => {
     setBusy(true);
@@ -71,7 +71,8 @@ export const CartDrawer = () => {
         navigate("/tickets");
         return;
       }
-      // Paid (or mixed) cart → Stripe Checkout
+
+      // Paid (or mixed) cart → SSLCommerz Checkout
       const { data, error } = await supabase.functions.invoke("create-checkout");
       if (error) throw error;
       if (!data?.url) throw new Error("No checkout URL returned");
@@ -124,12 +125,12 @@ export const CartDrawer = () => {
               disabled={busy}
             >
               {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {total === 0 ? "Reserve free tickets" : "Pay with Stripe"}
+              {total === 0 ? "Reserve free tickets" : "Pay with SSLCommerz"}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
               {total === 0
                 ? "Free tickets are reserved instantly."
-                : "Secure payment via Stripe (test mode)."}
+                : "Secure payment via SSLCommerz (test mode)."}
             </p>
           </div>
         )}
