@@ -2,7 +2,7 @@
 // - checkout.session.completed: mint tickets via checkout_paid_cart RPC
 //   If the 5-min hold expired before payment landed, refund automatically.
 // - checkout.session.expired / async_payment_failed: free the held seats.
-import Stripe from "npm:stripe@17.5.0";
+import Stripe from "https://esm.sh/stripe@17.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
