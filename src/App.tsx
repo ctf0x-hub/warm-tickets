@@ -22,6 +22,8 @@ import OrganizerApprovals from "./pages/OrganizerApprovals";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminApprovals from "./pages/AdminApprovals";
 import AdminTaxonomy from "./pages/AdminTaxonomy";
+import AdminEvents from "./pages/AdminEvents";
+import AdminUsers from "./pages/AdminUsers";
 import MyTickets from "./pages/MyTickets";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutCancel from "./pages/CheckoutCancel";
@@ -59,6 +61,8 @@ const App = () => (
                   <Route path="/admin" element={<ProtectedRoute requireRole="admin"><AdminDashboard /></ProtectedRoute>} />
                   <Route path="/admin/approvals" element={<ProtectedRoute requireRole="admin"><AdminApprovals /></ProtectedRoute>} />
                   <Route path="/admin/taxonomy" element={<ProtectedRoute requireRole="admin"><AdminTaxonomy /></ProtectedRoute>} />
+                  <Route path="/admin/events" element={<ProtectedRoute requireRole="admin"><AdminEvents /></ProtectedRoute>} />
+                  <Route path="/admin/users" element={<ProtectedRoute requireRole="admin"><AdminUsers /></ProtectedRoute>} />
 
                   <Route path="*" element={<NotFound />} />
                 </Route>
