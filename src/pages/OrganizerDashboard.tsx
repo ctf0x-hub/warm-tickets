@@ -110,7 +110,7 @@ const OrganizerDashboard = () => {
             {events.map((e) => (
               <Link
                 key={e.id}
-                to={`/organizer/events/${e.id}`}
+                to={`/organizer/events/${e.id}/analytics`}
                 className="block rounded-2xl border border-border/50 bg-gradient-card p-5 transition-smooth hover:border-primary/40 hover:shadow-card"
               >
                 <div className="flex gap-5">
