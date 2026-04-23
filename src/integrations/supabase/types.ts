@@ -99,6 +99,76 @@ export type Database = {
           },
         ]
       }
+      event_booths: {
+        Row: {
+          checkpoint_id: string
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          checkpoint_id: string
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          checkpoint_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_booths_checkpoint_id_fkey"
+            columns: ["checkpoint_id"]
+            isOneToOne: false
+            referencedRelation: "event_checkpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_checkpoints: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_checkpoints_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_staff: {
         Row: {
           added_by: string
@@ -371,8 +441,10 @@ export type Database = {
       }
       tickets: {
         Row: {
+          booth_id: string | null
           checked_in_at: string | null
           checked_in_by: string | null
+          checkpoint_id: string | null
           created_at: string
           event_id: string
           id: string
@@ -382,8 +454,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          booth_id?: string | null
           checked_in_at?: string | null
           checked_in_by?: string | null
+          checkpoint_id?: string | null
           created_at?: string
           event_id: string
           id?: string
@@ -393,8 +467,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          booth_id?: string | null
           checked_in_at?: string | null
           checked_in_by?: string | null
+          checkpoint_id?: string | null
           created_at?: string
           event_id?: string
           id?: string
@@ -404,6 +480,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tickets_booth_id_fkey"
+            columns: ["booth_id"]
+            isOneToOne: false
+            referencedRelation: "event_booths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_checkpoint_id_fkey"
+            columns: ["checkpoint_id"]
+            isOneToOne: false
+            referencedRelation: "event_checkpoints"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tickets_event_id_fkey"
             columns: ["event_id"]
@@ -456,15 +546,24 @@ export type Database = {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
       }
-      check_in_ticket: {
-        Args: { _event_id: string; _qr_code: string }
-        Returns: Json
-      }
+      check_in_ticket:
+        | { Args: { _event_id: string; _qr_code: string }; Returns: Json }
+        | {
+            Args: {
+              _booth_id?: string
+              _checkpoint_id?: string
+              _event_id: string
+              _qr_code: string
+            }
+            Returns: Json
+          }
       checkout_cart: {
         Args: never
         Returns: {
+          booth_id: string | null
           checked_in_at: string | null
           checked_in_by: string | null
+          checkpoint_id: string | null
           created_at: string
           event_id: string
           id: string
@@ -483,8 +582,10 @@ export type Database = {
       checkout_paid_cart: {
         Args: { _session_id: string }
         Returns: {
+          booth_id: string | null
           checked_in_at: string | null
           checked_in_by: string | null
+          checkpoint_id: string | null
           created_at: string
           event_id: string
           id: string
