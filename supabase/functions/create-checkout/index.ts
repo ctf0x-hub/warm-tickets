@@ -1,6 +1,6 @@
 // Creates a Stripe Checkout Session for the authenticated user's active cart holds.
 // Stamps each reservation with the session id so the webhook can mint tickets.
-import Stripe from "https://esm.sh/stripe@17.5.0?target=deno";
+import Stripe from "npm:stripe@17.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
