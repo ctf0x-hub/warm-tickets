@@ -15,19 +15,25 @@ const EventDetail = () => {
 
   useEffect(() => {
     if (!slug) return;
-    supabase
-      .from("events")
-      .select(
-        "*, event_types(name), event_tag_map(event_tags(name)), profiles!events_organizer_id_fkey(name)"
-      )
-      .eq("slug", slug)
-      .in("status", ["published", "approved"])
-      .is("deleted_at", null)
-      .maybeSingle()
-      .then(({ data }) => {
-        setEvent(data);
-        setLoading(false);
-      });
+    (async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("*, event_types(name), event_tag_map(event_tags(name))")
+        .eq("slug", slug)
+        .in("status", ["published", "approved"])
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (data) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("name")
+          .eq("user_id", (data as any).organizer_id)
+          .maybeSingle();
+        (data as any).profiles = prof;
+      }
+      setEvent(data);
+      setLoading(false);
+    })();
   }, [slug]);
 
   if (loading) {
