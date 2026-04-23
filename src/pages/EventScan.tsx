@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -14,6 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -23,6 +33,10 @@ import {
   Camera,
   CameraOff,
   Users,
+  MapPin,
+  Plus,
+  Trash2,
+  Settings2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -36,7 +50,11 @@ type ScanResult = {
   checked_in_at?: string | null;
 };
 
-const COOLDOWN_MS = 1500; // ignore the same code within this window
+type Checkpoint = { id: string; name: string; sort_order: number };
+type Booth = { id: string; checkpoint_id: string; name: string; sort_order: number };
+
+const COOLDOWN_MS = 1500;
+const LS_PREFIX = "pulse_scan";
 
 const ScanResultCard = ({ result }: { result: ScanResult }) => {
   const variant = result.ok
@@ -81,14 +99,156 @@ const ScanResultCard = ({ result }: { result: ScanResult }) => {
   );
 };
 
+const ManageDialog = ({
+  eventId,
+  checkpoints,
+  booths,
+  onChanged,
+}: {
+  eventId: string;
+  checkpoints: Checkpoint[];
+  booths: Booth[];
+  onChanged: () => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [newCheckpoint, setNewCheckpoint] = useState("");
+  const [newBooth, setNewBooth] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState(false);
+
+  const addCheckpoint = async () => {
+    const name = newCheckpoint.trim();
+    if (!name) return;
+    setBusy(true);
+    const { error } = await supabase
+      .from("event_checkpoints")
+      .insert({ event_id: eventId, name, sort_order: checkpoints.length });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    setNewCheckpoint("");
+    onChanged();
+  };
+
+  const addBooth = async (checkpointId: string) => {
+    const name = (newBooth[checkpointId] ?? "").trim();
+    if (!name) return;
+    setBusy(true);
+    const count = booths.filter((b) => b.checkpoint_id === checkpointId).length;
+    const { error } = await supabase
+      .from("event_booths")
+      .insert({ checkpoint_id: checkpointId, name, sort_order: count });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    setNewBooth((s) => ({ ...s, [checkpointId]: "" }));
+    onChanged();
+  };
+
+  const removeCheckpoint = async (id: string) => {
+    if (!confirm("Delete this checkpoint and its booths?")) return;
+    const { error } = await supabase.from("event_checkpoints").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    onChanged();
+  };
+
+  const removeBooth = async (id: string) => {
+    const { error } = await supabase.from("event_booths").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    onChanged();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Settings2 className="mr-2 h-4 w-4" /> Manage
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Checkpoints & booths</DialogTitle>
+          <DialogDescription>
+            Set up entry points (e.g. "Main Gate") and lanes inside them ("Booth 1", "Booth 2").
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5">
+          <div className="flex gap-2">
+            <Input
+              placeholder="New checkpoint name"
+              value={newCheckpoint}
+              onChange={(e) => setNewCheckpoint(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addCheckpoint()}
+            />
+            <Button onClick={addCheckpoint} disabled={busy || !newCheckpoint.trim()}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {checkpoints.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No checkpoints yet. Add one above.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {checkpoints.map((cp) => {
+                const cpBooths = booths.filter((b) => b.checkpoint_id === cp.id);
+                return (
+                  <Card key={cp.id} className="p-3 bg-card border-border/50">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <p className="font-medium flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-primary" /> {cp.name}
+                      </p>
+                      <Button size="icon" variant="ghost" onClick={() => removeCheckpoint(cp.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                    {cpBooths.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-2 pl-6">
+                        {cpBooths.map((b) => (
+                          <Badge key={b.id} variant="secondary" className="gap-1">
+                            {b.name}
+                            <button
+                              onClick={() => removeBooth(b.id)}
+                              className="ml-1 hover:text-destructive"
+                              aria-label="Remove booth"
+                            >
+                              ×
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex gap-2 pl-6">
+                      <Input
+                        placeholder="New booth"
+                        value={newBooth[cp.id] ?? ""}
+                        onChange={(e) => setNewBooth((s) => ({ ...s, [cp.id]: e.target.value }))}
+                        onKeyDown={(e) => e.key === "Enter" && addBooth(cp.id)}
+                        className="h-8 text-sm"
+                      />
+                      <Button size="sm" variant="outline" onClick={() => addBooth(cp.id)} disabled={busy}>
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const EventScan = () => {
   const { id: eventId } = useParams();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   const lastScanRef = useRef<{ code: string; at: number }>({ code: "", at: 0 });
 
   const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const [canManage, setCanManage] = useState(false);
   const [eventTitle, setEventTitle] = useState<string>("");
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [deviceId, setDeviceId] = useState<string | undefined>(undefined);
@@ -98,24 +258,67 @@ const EventScan = () => {
   const [stats, setStats] = useState({ ok: 0, dup: 0, fail: 0 });
   const [loading, setLoading] = useState(true);
 
+  const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([]);
+  const [booths, setBooths] = useState<Booth[]>([]);
+  const [checkpointId, setCheckpointId] = useState<string>("");
+  const [boothId, setBoothId] = useState<string>("");
+  // refs so handleScan always reads the latest selection without re-binding the camera
+  const checkpointRef = useRef("");
+  const boothRef = useRef("");
+  useEffect(() => { checkpointRef.current = checkpointId; }, [checkpointId]);
+  useEffect(() => { boothRef.current = boothId; }, [boothId]);
+
+  const loadCheckpoints = useCallback(async () => {
+    if (!eventId) return;
+    const [{ data: cps }, { data: bs }] = await Promise.all([
+      supabase.from("event_checkpoints").select("id,name,sort_order").eq("event_id", eventId).order("sort_order"),
+      supabase
+        .from("event_booths")
+        .select("id,checkpoint_id,name,sort_order, event_checkpoints!inner(event_id)")
+        .eq("event_checkpoints.event_id", eventId)
+        .order("sort_order"),
+    ]);
+    setCheckpoints((cps ?? []) as Checkpoint[]);
+    setBooths(((bs ?? []) as any[]).map(({ event_checkpoints, ...b }) => b as Booth));
+  }, [eventId]);
+
   // Authorize and load event
   useEffect(() => {
     if (!user || !eventId) return;
     let mounted = true;
     (async () => {
       const [{ data: ev }, { data: canScan }] = await Promise.all([
-        supabase.from("events").select("title").eq("id", eventId).maybeSingle(),
+        supabase.from("events").select("title, organizer_id").eq("id", eventId).maybeSingle(),
         supabase.rpc("can_scan_event", { _event_id: eventId, _user_id: user.id }),
       ]);
       if (!mounted) return;
       setEventTitle(ev?.title ?? "Event");
       setAuthorized(Boolean(canScan));
+      setCanManage(Boolean(isAdmin || (ev && ev.organizer_id === user.id)));
+      await loadCheckpoints();
       setLoading(false);
     })();
-    return () => {
-      mounted = false;
-    };
-  }, [user, eventId]);
+    return () => { mounted = false; };
+  }, [user, eventId, isAdmin, loadCheckpoints]);
+
+  // Restore last selected checkpoint/booth for this event
+  useEffect(() => {
+    if (!eventId || checkpoints.length === 0) return;
+    const cp = localStorage.getItem(`${LS_PREFIX}_cp_${eventId}`) ?? "";
+    const b = localStorage.getItem(`${LS_PREFIX}_booth_${eventId}`) ?? "";
+    if (cp && checkpoints.some((c) => c.id === cp)) {
+      setCheckpointId(cp);
+      if (b && booths.some((x) => x.id === b && x.checkpoint_id === cp)) setBoothId(b);
+    }
+  }, [eventId, checkpoints, booths]);
+
+  // Persist selections
+  useEffect(() => {
+    if (eventId) localStorage.setItem(`${LS_PREFIX}_cp_${eventId}`, checkpointId);
+  }, [eventId, checkpointId]);
+  useEffect(() => {
+    if (eventId) localStorage.setItem(`${LS_PREFIX}_booth_${eventId}`, boothId);
+  }, [eventId, boothId]);
 
   // Enumerate cameras once authorized
   useEffect(() => {
@@ -123,7 +326,6 @@ const EventScan = () => {
     BrowserMultiFormatReader.listVideoInputDevices()
       .then((d) => {
         setDevices(d);
-        // Prefer back camera if labelled
         const back = d.find((x) => /back|rear|environment/i.test(x.label));
         setDeviceId(back?.deviceId ?? d[0]?.deviceId);
       })
@@ -142,7 +344,9 @@ const EventScan = () => {
         const { data, error } = await supabase.rpc("check_in_ticket", {
           _qr_code: code,
           _event_id: eventId,
-        });
+          _checkpoint_id: checkpointRef.current || null,
+          _booth_id: boothRef.current || null,
+        } as any);
         if (error) throw error;
         const r = data as unknown as ScanResult;
         setLastResult(r);
@@ -151,12 +355,10 @@ const EventScan = () => {
           dup: s.dup + (r.code === "already_checked_in" ? 1 : 0),
           fail: s.fail + (!r.ok && r.code !== "already_checked_in" ? 1 : 0),
         }));
-        // brief haptic where supported
         if (navigator.vibrate) navigator.vibrate(r.ok ? 80 : [40, 40, 40]);
       } catch (e: any) {
         toast.error(e.message ?? "Scan failed");
       } finally {
-        // small delay so user sees result before next scan can register
         setTimeout(() => setBusy(false), 400);
       }
     },
@@ -187,16 +389,11 @@ const EventScan = () => {
     setScanning(false);
   }, []);
 
-  // Stop on unmount
-  useEffect(() => {
-    return () => controlsRef.current?.stop();
-  }, []);
+  useEffect(() => () => controlsRef.current?.stop(), []);
 
-  // Restart when device changes mid-session
   useEffect(() => {
     if (scanning) {
       stopScanning();
-      // give time to release device before restart
       const t = setTimeout(startScanning, 200);
       return () => clearTimeout(t);
     }
@@ -215,6 +412,10 @@ const EventScan = () => {
     return <Navigate to="/organizer" replace />;
   }
 
+  const currentBooths = booths.filter((b) => b.checkpoint_id === checkpointId);
+  const currentCheckpoint = checkpoints.find((c) => c.id === checkpointId);
+  const currentBooth = booths.find((b) => b.id === boothId);
+
   return (
     <>
       <Helmet>
@@ -232,16 +433,93 @@ const EventScan = () => {
             <Users className="inline h-3 w-3 mr-1" /> Door scanner
           </p>
           <h1 className="font-display text-3xl font-bold">{eventTitle}</h1>
+          {(currentCheckpoint || currentBooth) && (
+            <p className="text-sm text-muted-foreground mt-1">
+              <MapPin className="inline h-3 w-3 mr-1 text-primary" />
+              {currentCheckpoint?.name}
+              {currentBooth && ` · ${currentBooth.name}`}
+            </p>
+          )}
         </div>
+
+        {/* Checkpoint & booth selectors */}
+        <Card className="p-4 mb-4 bg-gradient-card border-border/50">
+          <div className="flex items-center justify-between mb-3">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+              Scan location
+            </Label>
+            {canManage && (
+              <ManageDialog
+                eventId={eventId!}
+                checkpoints={checkpoints}
+                booths={booths}
+                onChanged={loadCheckpoints}
+              />
+            )}
+          </div>
+
+          {checkpoints.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {canManage
+                ? "No checkpoints yet — add one to track where scans happen."
+                : "Organizer has not set up checkpoints. Scans will be recorded without a location."}
+            </p>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs mb-1.5 block">Checkpoint</Label>
+                <Select
+                  value={checkpointId}
+                  onValueChange={(v) => {
+                    setCheckpointId(v);
+                    setBoothId(""); // reset booth when checkpoint changes
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select checkpoint" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {checkpoints.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs mb-1.5 block">Booth</Label>
+                <Select
+                  value={boothId}
+                  onValueChange={setBoothId}
+                  disabled={!checkpointId || currentBooths.length === 0}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        !checkpointId
+                          ? "Pick a checkpoint first"
+                          : currentBooths.length === 0
+                            ? "No booths"
+                            : "Select booth"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currentBooths.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground mt-3">
+            Selection stays the same for every scan until you change it manually.
+          </p>
+        </Card>
 
         <Card className="overflow-hidden bg-card border-border/50 mb-4">
           <div className="relative aspect-square bg-black">
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              playsInline
-              muted
-            />
+            <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
             {!scanning && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 text-white">
                 <Camera className="h-12 w-12 opacity-60" />
