@@ -34,7 +34,7 @@ const AdminApprovals = () => {
     // 2) Orphan pending events (status set directly without a request row)
     const { data: orphanEvents, error: orphErr } = await supabase
       .from("events")
-      .select("id, title, slug, organizer_id, status, created_at, venue, city, starts_at, ends_at, description")
+      .select("id, title, slug, organizer_id, status, created_at, venue, city, starts_at, ends_at, description, banner_image")
       .in("status", ["pending_approval", "pending_edit_approval"])
       .is("deleted_at", null)
       .order("created_at", { ascending: true });
@@ -53,11 +53,29 @@ const AdminApprovals = () => {
           venue: e.venue, city: e.city,
           starts_at: e.starts_at, ends_at: e.ends_at,
           description: e.description,
+          banner_image: e.banner_image,
         },
-        events: { title: e.title, slug: e.slug, organizer_id: e.organizer_id, status: e.status },
+        events: { title: e.title, slug: e.slug, organizer_id: e.organizer_id, status: e.status, banner_image: e.banner_image },
         profiles: null,
         _orphan: true,
       }));
+
+    // 2b) Fetch full event details (banner) for non-orphan requests
+    const requestedIds = requested.map((r: any) => r.event_id);
+    if (requestedIds.length) {
+      const { data: evs } = await supabase
+        .from("events")
+        .select("id, banner_image, venue, city, starts_at, ends_at, description, slug, title, status")
+        .in("id", requestedIds);
+      const byEvId = new Map((evs ?? []).map((e: any) => [e.id, e]));
+      requested.forEach((r: any) => {
+        const e = byEvId.get(r.event_id);
+        if (e) {
+          r.events = { ...(r.events || {}), ...e };
+          r.snapshot = { banner_image: e.banner_image, ...(r.snapshot || {}) };
+        }
+      });
+    }
 
     // 3) Fetch organizer profiles separately (no FK between events/requests and profiles)
     const merged = [...requested, ...orphans];
