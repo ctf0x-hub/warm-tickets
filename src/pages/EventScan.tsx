@@ -423,8 +423,8 @@ const EventScan = () => {
       </Helmet>
       <div className="container max-w-2xl py-8">
         <Button asChild variant="ghost" size="sm" className="mb-4">
-          <Link to={`/organizer/events/${eventId}`}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to event
+          <Link to={`/organizer/events/${eventId}/analytics`}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to analytics
           </Link>
         </Button>
 
