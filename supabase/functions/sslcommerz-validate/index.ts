@@ -51,18 +51,20 @@ Deno.serve(async (req) => {
         );
         const vj = await v.json();
         if (vj.status === "VALID" || vj.status === "VALIDATED") {
-          await admin.rpc("checkout_paid_cart", { _session_id: tranId });
+          const { error } = await admin.rpc("checkout_paid_cart", { _session_id: tranId });
+          if (error) throw error;
         }
       }
     } else if ((status === "fail" || status === "cancel") && tranId) {
-      await admin.rpc("release_cart_by_session", { _session_id: tranId });
+      const { error } = await admin.rpc("release_cart_by_session", { _session_id: tranId });
+      if (error) throw error;
     }
   } catch (e) {
     console.error("validate processing error (non-fatal):", e);
   }
 
   const target = status === "success"
-    ? `${redirect}/checkout/success?tran_id=${encodeURIComponent(tranId)}`
+    ? `${redirect}/checkout/success?tran_id=${encodeURIComponent(tranId)}&val_id=${encodeURIComponent(valId)}`
     : `${redirect}/checkout/cancel?tran_id=${encodeURIComponent(tranId)}`;
 
   return new Response(null, {
