@@ -126,11 +126,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Stamp reservations with our tran_id (and mirror into payment_session_id)
+    // Stamp reservations with our tran_id, mirror into payment_session_id,
+    // and extend the hold while the customer completes payment.
     const ids = reservations.map((r: any) => r.id);
+    const paymentHoldUntil = new Date(Date.now() + 30 * 60 * 1000).toISOString();
     const { error: updateErr } = await admin
       .from("cart_reservations")
-      .update({ payment_session_id: tranId, sslcommerz_tran_id: tranId })
+      .update({
+        payment_session_id: tranId,
+        sslcommerz_tran_id: tranId,
+        expires_at: paymentHoldUntil,
+      })
       .in("id", ids);
     if (updateErr) throw updateErr;
 
