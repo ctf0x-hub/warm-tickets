@@ -19,8 +19,9 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          payment_session_id: string | null
           quantity: number
-          stripe_session_id: string | null
+          sslcommerz_tran_id: string | null
           tier_id: string
           user_id: string
         }
@@ -28,8 +29,9 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          payment_session_id?: string | null
           quantity: number
-          stripe_session_id?: string | null
+          sslcommerz_tran_id?: string | null
           tier_id: string
           user_id: string
         }
@@ -37,8 +39,9 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          payment_session_id?: string | null
           quantity?: number
-          stripe_session_id?: string | null
+          sslcommerz_tran_id?: string | null
           tier_id?: string
           user_id?: string
         }
@@ -448,6 +451,7 @@ export type Database = {
           created_at: string
           event_id: string
           id: string
+          payment_ref: string | null
           qr_code: string
           status: Database["public"]["Enums"]["ticket_status"]
           tier_id: string
@@ -461,6 +465,7 @@ export type Database = {
           created_at?: string
           event_id: string
           id?: string
+          payment_ref?: string | null
           qr_code?: string
           status?: Database["public"]["Enums"]["ticket_status"]
           tier_id: string
@@ -474,6 +479,7 @@ export type Database = {
           created_at?: string
           event_id?: string
           id?: string
+          payment_ref?: string | null
           qr_code?: string
           status?: Database["public"]["Enums"]["ticket_status"]
           tier_id?: string
@@ -567,6 +573,7 @@ export type Database = {
           created_at: string
           event_id: string
           id: string
+          payment_ref: string | null
           qr_code: string
           status: Database["public"]["Enums"]["ticket_status"]
           tier_id: string
@@ -579,28 +586,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      checkout_paid_cart: {
-        Args: { _session_id: string }
-        Returns: {
-          booth_id: string | null
-          checked_in_at: string | null
-          checked_in_by: string | null
-          checkpoint_id: string | null
-          created_at: string
-          event_id: string
-          id: string
-          qr_code: string
-          status: Database["public"]["Enums"]["ticket_status"]
-          tier_id: string
-          user_id: string
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "tickets"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
+      checkout_paid_cart: { Args: { _session_id: string }; Returns: undefined }
       event_analytics: { Args: { _event_id: string }; Returns: Json }
       expire_stale_reservations: { Args: never; Returns: undefined }
       has_role: {

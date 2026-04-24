@@ -1,6 +1,6 @@
-// Creates a Stripe Checkout Session for the authenticated user's active cart holds.
-// Stamps each reservation with the session id so the webhook can mint tickets.
-import Stripe from "https://esm.sh/stripe@17.5.0?target=deno";
+// Initiates an SSLCommerz payment session for the user's active cart holds.
+// Stamps each reservation with the SSLCommerz tran_id so the IPN/validator
+// can mint tickets for the right cart.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
@@ -25,7 +25,6 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // user-scoped client (validates JWT)
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -37,11 +36,9 @@ Deno.serve(async (req) => {
       });
     }
     const user = userData.user;
-
-    // service client for trusted writes (stamping session id)
     const admin = createClient(supabaseUrl, serviceKey);
 
-    // Load active reservations for this user with tier + event info
+    // Load active reservations
     const { data: reservations, error: rErr } = await admin
       .from("cart_reservations")
       .select(
@@ -69,61 +66,78 @@ Deno.serve(async (req) => {
       );
     }
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
-      apiVersion: "2024-11-20.acacia",
-    });
+    const storeId = Deno.env.get("SSLCOMMERZ_STORE_ID")!;
+    const storePassword = Deno.env.get("SSLCOMMERZ_STORE_PASSWORD")!;
+    const isLive = (Deno.env.get("SSLCOMMERZ_IS_LIVE") ?? "false").toLowerCase() === "true";
 
-    // Reuse a customer if one exists for this email
-    let customerId: string | undefined;
-    const existing = await stripe.customers.list({ email: user.email!, limit: 1 });
-    if (existing.data.length > 0) customerId = existing.data[0].id;
+    const baseUrl = isLive
+      ? "https://securepay.sslcommerz.com"
+      : "https://sandbox.sslcommerz.com";
 
-    const currency = (reservations[0] as any).ticket_tiers.currency?.toLowerCase() ?? "usd";
+    const currency = ((reservations[0] as any).ticket_tiers.currency ?? "BDT").toUpperCase();
+    const totalAmount = (totalCents / 100).toFixed(2);
 
-    const line_items = reservations.map((r: any) => ({
-      quantity: r.quantity,
-      price_data: {
-        currency,
-        unit_amount: r.ticket_tiers.price_cents,
-        product_data: {
-          name: `${r.ticket_tiers.events.title} — ${r.ticket_tiers.name}`,
-        },
-      },
-    }));
+    // Unique transaction id we control (also used as our session id)
+    const tranId = `pulse_${user.id.slice(0, 8)}_${Date.now()}`;
 
     const origin = req.headers.get("origin") ?? "";
+    const projectRef = supabaseUrl.split("//")[1].split(".")[0];
+    const fnBase = `https://${projectRef}.supabase.co/functions/v1`;
 
-    // Cap session expiry to the soonest hold expiry (Stripe min 30 min, max 24h)
-    const minExpiry = Math.min(
-      ...reservations.map((r: any) => new Date(r.expires_at).getTime())
-    );
-    const expiresAt = Math.max(
-      Math.floor(Date.now() / 1000) + 30 * 60,
-      Math.floor(minExpiry / 1000)
-    );
+    const productNames = reservations
+      .map((r: any) => `${r.ticket_tiers.events.title} - ${r.ticket_tiers.name} x${r.quantity}`)
+      .join("; ")
+      .slice(0, 250);
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      customer: customerId,
-      customer_email: customerId ? undefined : user.email,
-      line_items,
-      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/checkout/cancel?session_id={CHECKOUT_SESSION_ID}`,
-      expires_at: expiresAt,
-      metadata: { user_id: user.id },
+    const form = new URLSearchParams({
+      store_id: storeId,
+      store_passwd: storePassword,
+      total_amount: totalAmount,
+      currency,
+      tran_id: tranId,
+      success_url: `${fnBase}/sslcommerz-validate?redirect=${encodeURIComponent(origin)}&status=success`,
+      fail_url: `${fnBase}/sslcommerz-validate?redirect=${encodeURIComponent(origin)}&status=fail`,
+      cancel_url: `${fnBase}/sslcommerz-validate?redirect=${encodeURIComponent(origin)}&status=cancel`,
+      ipn_url: `${fnBase}/sslcommerz-ipn`,
+      shipping_method: "NO",
+      product_name: productNames || "Event Tickets",
+      product_category: "Tickets",
+      product_profile: "general",
+      cus_name: user.user_metadata?.name ?? user.email ?? "Customer",
+      cus_email: user.email ?? "noreply@example.com",
+      cus_add1: "N/A",
+      cus_city: "N/A",
+      cus_country: "Bangladesh",
+      cus_phone: "01700000000",
     });
 
-    // Stamp the reservations with this session id
+    const initRes = await fetch(`${baseUrl}/gwprocess/v4/api.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: form.toString(),
+    });
+    const initJson = await initRes.json();
+
+    if (initJson.status !== "SUCCESS" || !initJson.GatewayPageURL) {
+      console.error("SSLCommerz init failed", initJson);
+      return new Response(
+        JSON.stringify({ error: initJson.failedreason ?? "Failed to initiate payment" }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Stamp reservations with our tran_id (and mirror into payment_session_id)
     const ids = reservations.map((r: any) => r.id);
     const { error: updateErr } = await admin
       .from("cart_reservations")
-      .update({ stripe_session_id: session.id })
+      .update({ payment_session_id: tranId, sslcommerz_tran_id: tranId })
       .in("id", ids);
     if (updateErr) throw updateErr;
 
-    return new Response(JSON.stringify({ url: session.url, session_id: session.id }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ url: initJson.GatewayPageURL, tran_id: tranId }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (e) {
     console.error("create-checkout error", e);
     return new Response(JSON.stringify({ error: (e as Error).message }), {

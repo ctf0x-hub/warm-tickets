@@ -6,10 +6,10 @@ import { useCart } from "@/contexts/CartContext";
 
 export default function CheckoutSuccess() {
   const [params] = useSearchParams();
-  const sessionId = params.get("session_id");
+  const tranId = params.get("tran_id");
   const { refresh } = useCart();
 
-  // Refresh cart so the drawer empties as the webhook clears holds.
+  // Refresh cart so the drawer empties as the IPN clears holds.
   useEffect(() => {
     const t = setInterval(refresh, 2000);
     const stop = setTimeout(() => clearInterval(t), 20000);
@@ -28,10 +28,10 @@ export default function CheckoutSuccess() {
       <p className="text-muted-foreground mb-2">
         We're confirming your tickets — this usually takes a few seconds.
       </p>
-      {sessionId && (
+      {tranId && (
         <p className="text-xs text-muted-foreground mb-8 inline-flex items-center gap-2">
           <Loader2 className="h-3 w-3 animate-spin" />
-          Session {sessionId.slice(-10)}
+          Transaction {tranId.slice(-12)}
         </p>
       )}
       <div className="flex gap-3 justify-center">

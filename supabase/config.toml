@@ -1,4 +1,7 @@
 project_id = "jdeojxjnvblrckjhgrpe"
 
-[functions.stripe-webhook]
+[functions.sslcommerz-ipn]
+verify_jwt = false
+
+[functions.sslcommerz-validate]
 verify_jwt = false
