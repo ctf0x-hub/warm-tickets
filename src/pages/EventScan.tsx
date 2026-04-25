@@ -577,11 +577,21 @@ const EventScan = () => {
           </div>
         </Card>
 
-        {lastResult && (
-          <div className="mb-4">
-            <ScanResultCard result={lastResult} />
-          </div>
-        )}
+        <Dialog open={resultOpen} onOpenChange={setResultOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="sr-only">Scan result</DialogTitle>
+              <DialogDescription className="sr-only">
+                {lastResult?.message ?? "Scan result"}
+              </DialogDescription>
+            </DialogHeader>
+            {lastResult && <ScanResultCard result={lastResult} />}
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Next scan available in a moment…
+            </p>
+          </DialogContent>
+        </Dialog>
+
 
         <div className="grid grid-cols-3 gap-3">
           <Card className="p-4 text-center bg-success/10 border-success/30">
