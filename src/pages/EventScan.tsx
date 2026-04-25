@@ -46,6 +46,7 @@ type ScanResult = {
   code: string;
   message: string;
   attendee_email?: string | null;
+  attendee_name?: string | null;
   tier_name?: string | null;
   checked_in_at?: string | null;
 };
