@@ -5,14 +5,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar, MapPin, CheckCircle2, XCircle, Eye, EyeOff } from "lucide-react";
+import { Loader2, Calendar, MapPin, CheckCircle2, XCircle, Eye, EyeOff, MapPinCheck } from "lucide-react";
 import { format } from "date-fns";
 import { QRCodeSVG } from "qrcode.react";
 import { Helmet } from "react-helmet-async";
 
 const TicketCard = ({ t }: { t: any }) => {
   const [showCode, setShowCode] = useState(false);
-  const inactive = t.status === "checked_in" || t.status === "cancelled";
+  const cancelled = t.status === "cancelled";
+  const scans: Array<{ name: string | null; scanned_at: string }> = (t.ticket_scans ?? [])
+    .slice()
+    .sort((a: any, b: any) => new Date(a.scanned_at).getTime() - new Date(b.scanned_at).getTime())
+    .map((s: any) => ({ name: s.event_checkpoints?.name ?? null, scanned_at: s.scanned_at }));
 
   return (
     <Card className="overflow-hidden bg-gradient-card border-border/50">
@@ -22,12 +26,13 @@ const TicketCard = ({ t }: { t: any }) => {
             <Badge className="bg-primary/15 text-primary border-primary/30">
               {t.ticket_tiers?.name}
             </Badge>
-            {t.status === "checked_in" && (
-              <Badge className="bg-success/20 text-success border-success/40">
-                <CheckCircle2 className="h-3 w-3 mr-1" /> Checked in
+            {scans.map((s, i) => (
+              <Badge key={i} className="bg-success/20 text-success border-success/40">
+                <MapPinCheck className="h-3 w-3 mr-1" />
+                {s.name ?? "Scanned"}
               </Badge>
-            )}
-            {t.status === "cancelled" && (
+            ))}
+            {cancelled && (
               <Badge variant="destructive">
                 <XCircle className="h-3 w-3 mr-1" /> Cancelled
               </Badge>
@@ -69,13 +74,13 @@ const TicketCard = ({ t }: { t: any }) => {
         <div className="flex flex-col items-center gap-2 mx-auto sm:mx-0">
           <div
             className={`bg-white p-4 rounded-2xl shadow-card flex items-center justify-center ${
-              inactive ? "opacity-30 grayscale" : ""
+              cancelled ? "opacity-30 grayscale" : ""
             }`}
           >
             <QRCodeSVG value={t.qr_code} size={176} level="M" />
           </div>
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            {inactive ? "Not valid" : "Show at the door"}
+            {cancelled ? "Cancelled" : "Show at the door"}
           </p>
         </div>
       </div>
@@ -92,7 +97,7 @@ const MyTickets = () => {
     if (!user) return;
     supabase
       .from("tickets")
-      .select("*, ticket_tiers(name, price_cents, currency), events(title, slug, starts_at, venue, city, banner_image)")
+      .select("*, ticket_tiers(name, price_cents, currency), events(title, slug, starts_at, venue, city, banner_image), ticket_scans(scanned_at, event_checkpoints(name))")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
