@@ -383,6 +383,65 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_scans: {
+        Row: {
+          booth_id: string | null
+          checkpoint_id: string | null
+          event_id: string
+          id: string
+          scanned_at: string
+          scanned_by: string
+          ticket_id: string
+        }
+        Insert: {
+          booth_id?: string | null
+          checkpoint_id?: string | null
+          event_id: string
+          id?: string
+          scanned_at?: string
+          scanned_by: string
+          ticket_id: string
+        }
+        Update: {
+          booth_id?: string | null
+          checkpoint_id?: string | null
+          event_id?: string
+          id?: string
+          scanned_at?: string
+          scanned_by?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_scans_booth_id_fkey"
+            columns: ["booth_id"]
+            isOneToOne: false
+            referencedRelation: "event_booths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_scans_checkpoint_id_fkey"
+            columns: ["checkpoint_id"]
+            isOneToOne: false
+            referencedRelation: "event_checkpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_scans_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_scans_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_tiers: {
         Row: {
           created_at: string

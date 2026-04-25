@@ -53,7 +53,8 @@ type ScanResult = {
 type Checkpoint = { id: string; name: string; sort_order: number };
 type Booth = { id: string; checkpoint_id: string; name: string; sort_order: number };
 
-const COOLDOWN_MS = 1500;
+const COOLDOWN_MS = 3000;
+const POPUP_AUTO_CLOSE_MS = 2500;
 const LS_PREFIX = "pulse_scan";
 
 const ScanResultCard = ({ result }: { result: ScanResult }) => {
@@ -255,6 +256,7 @@ const EventScan = () => {
   const [scanning, setScanning] = useState(false);
   const [busy, setBusy] = useState(false);
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
+  const [resultOpen, setResultOpen] = useState(false);
   const [stats, setStats] = useState({ ok: 0, dup: 0, fail: 0 });
   const [loading, setLoading] = useState(true);
 
@@ -350,6 +352,7 @@ const EventScan = () => {
         if (error) throw error;
         const r = data as unknown as ScanResult;
         setLastResult(r);
+        setResultOpen(true);
         setStats((s) => ({
           ok: s.ok + (r.ok ? 1 : 0),
           dup: s.dup + (r.code === "already_checked_in" ? 1 : 0),
@@ -359,7 +362,7 @@ const EventScan = () => {
       } catch (e: any) {
         toast.error(e.message ?? "Scan failed");
       } finally {
-        setTimeout(() => setBusy(false), 400);
+        setTimeout(() => setBusy(false), COOLDOWN_MS);
       }
     },
     [eventId, busy]
@@ -388,6 +391,13 @@ const EventScan = () => {
     controlsRef.current = null;
     setScanning(false);
   }, []);
+
+  // Auto-close result popup so the next scan can show
+  useEffect(() => {
+    if (!resultOpen) return;
+    const t = setTimeout(() => setResultOpen(false), POPUP_AUTO_CLOSE_MS);
+    return () => clearTimeout(t);
+  }, [resultOpen, lastResult]);
 
   useEffect(() => () => controlsRef.current?.stop(), []);
 
@@ -567,11 +577,21 @@ const EventScan = () => {
           </div>
         </Card>
 
-        {lastResult && (
-          <div className="mb-4">
-            <ScanResultCard result={lastResult} />
-          </div>
-        )}
+        <Dialog open={resultOpen} onOpenChange={setResultOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="sr-only">Scan result</DialogTitle>
+              <DialogDescription className="sr-only">
+                {lastResult?.message ?? "Scan result"}
+              </DialogDescription>
+            </DialogHeader>
+            {lastResult && <ScanResultCard result={lastResult} />}
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Next scan available in a moment…
+            </p>
+          </DialogContent>
+        </Dialog>
+
 
         <div className="grid grid-cols-3 gap-3">
           <Card className="p-4 text-center bg-success/10 border-success/30">
