@@ -256,6 +256,7 @@ const EventScan = () => {
   const [scanning, setScanning] = useState(false);
   const [busy, setBusy] = useState(false);
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
+  const [resultOpen, setResultOpen] = useState(false);
   const [stats, setStats] = useState({ ok: 0, dup: 0, fail: 0 });
   const [loading, setLoading] = useState(true);
 
