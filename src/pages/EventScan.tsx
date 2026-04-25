@@ -49,6 +49,8 @@ type ScanResult = {
   attendee_name?: string | null;
   tier_name?: string | null;
   checked_in_at?: string | null;
+  prior_booth_name?: string | null;
+  prior_checkpoint_name?: string | null;
 };
 
 type Checkpoint = { id: string; name: string; sort_order: number };
@@ -95,7 +97,8 @@ const ScanResultCard = ({ result }: { result: ScanResult }) => {
           )}
           {result.checked_in_at && (
             <p className="text-xs text-muted-foreground mt-2">
-              Originally scanned {format(new Date(result.checked_in_at), "PPp")}
+              Last scanned {format(new Date(result.checked_in_at), "PPp")}
+              {result.prior_booth_name && ` · ${result.prior_booth_name}`}
             </p>
           )}
         </div>
