@@ -352,6 +352,7 @@ const EventScan = () => {
         if (error) throw error;
         const r = data as unknown as ScanResult;
         setLastResult(r);
+        setResultOpen(true);
         setStats((s) => ({
           ok: s.ok + (r.ok ? 1 : 0),
           dup: s.dup + (r.code === "already_checked_in" ? 1 : 0),
@@ -361,7 +362,7 @@ const EventScan = () => {
       } catch (e: any) {
         toast.error(e.message ?? "Scan failed");
       } finally {
-        setTimeout(() => setBusy(false), 400);
+        setTimeout(() => setBusy(false), COOLDOWN_MS);
       }
     },
     [eventId, busy]
