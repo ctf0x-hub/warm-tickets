@@ -49,6 +49,8 @@ type ScanResult = {
   attendee_name?: string | null;
   tier_name?: string | null;
   checked_in_at?: string | null;
+  prior_booth_name?: string | null;
+  prior_checkpoint_name?: string | null;
 };
 
 type Checkpoint = { id: string; name: string; sort_order: number };
