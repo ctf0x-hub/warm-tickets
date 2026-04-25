@@ -84,6 +84,9 @@ const ScanResultCard = ({ result }: { result: ScanResult }) => {
         <Icon className={`h-7 w-7 shrink-0 ${iconClass}`} />
         <div className="min-w-0">
           <p className="font-display font-bold text-lg">{result.message}</p>
+          {result.attendee_name && (
+            <p className="text-base font-semibold mt-1 truncate">{result.attendee_name}</p>
+          )}
           {result.attendee_email && (
             <p className="text-sm text-muted-foreground truncate">{result.attendee_email}</p>
           )}
