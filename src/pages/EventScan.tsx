@@ -392,6 +392,13 @@ const EventScan = () => {
     setScanning(false);
   }, []);
 
+  // Auto-close result popup so the next scan can show
+  useEffect(() => {
+    if (!resultOpen) return;
+    const t = setTimeout(() => setResultOpen(false), POPUP_AUTO_CLOSE_MS);
+    return () => clearTimeout(t);
+  }, [resultOpen, lastResult]);
+
   useEffect(() => () => controlsRef.current?.stop(), []);
 
   useEffect(() => {
