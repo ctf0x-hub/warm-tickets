@@ -97,7 +97,8 @@ const ScanResultCard = ({ result }: { result: ScanResult }) => {
           )}
           {result.checked_in_at && (
             <p className="text-xs text-muted-foreground mt-2">
-              Originally scanned {format(new Date(result.checked_in_at), "PPp")}
+              Last scanned {format(new Date(result.checked_in_at), "PPp")}
+              {result.prior_booth_name && ` · ${result.prior_booth_name}`}
             </p>
           )}
         </div>
