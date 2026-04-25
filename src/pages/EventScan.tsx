@@ -53,7 +53,8 @@ type ScanResult = {
 type Checkpoint = { id: string; name: string; sort_order: number };
 type Booth = { id: string; checkpoint_id: string; name: string; sort_order: number };
 
-const COOLDOWN_MS = 1500;
+const COOLDOWN_MS = 3000;
+const POPUP_AUTO_CLOSE_MS = 2500;
 const LS_PREFIX = "pulse_scan";
 
 const ScanResultCard = ({ result }: { result: ScanResult }) => {
