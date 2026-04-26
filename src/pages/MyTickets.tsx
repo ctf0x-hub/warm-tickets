@@ -33,8 +33,10 @@ type Scan = { name: string | null; scanned_at: string };
 
 const TicketCard = ({ t }: { t: any }) => {
   const [showCode, setShowCode] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   const [busy, setBusy] = useState<"pdf" | "share" | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
+  const terms: string | null = t.events?.terms ?? null;
 
   const cancelled = t.status === "cancelled";
   const scans: Scan[] = (t.ticket_scans ?? [])
