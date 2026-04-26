@@ -129,7 +129,7 @@ const EventDetail = () => {
               {(event as any).terms && (
                 <div className="mt-8 pt-8 border-t border-border/50">
                   <h2 className="font-display text-lg font-semibold mb-2">
-                    Terms &amp; conditions
+                    Ticket Terms &amp; Conditions
                   </h2>
                   <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
                     {(event as any).terms}

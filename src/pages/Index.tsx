@@ -122,7 +122,7 @@ const Index = () => {
               variant="secondary"
               className="h-12 px-8 bg-white text-foreground hover:bg-white/90"
             >
-              <Link to="/events">Browse all events</Link>
+              <Link to="/events"><span className="text-gradient">Browse all events</span></Link>
             </Button>
           </div>
         </div>

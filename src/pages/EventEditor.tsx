@@ -313,7 +313,7 @@ const EventEditor = () => {
           </div>
 
           <div>
-            <Label htmlFor="terms">Ticket terms &amp; conditions / policy</Label>
+            <Label htmlFor="terms">Ticket Terms &amp; Conditions</Label>
             <Textarea
               id="terms"
               rows={5}

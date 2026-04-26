@@ -226,7 +226,7 @@ const AdminApprovals = () => {
                     )}
                     {snap.terms && (
                       <div className="sm:col-span-2 pt-2 border-t border-border/40">
-                        <span className="text-muted-foreground text-xs uppercase tracking-wider">Ticket terms &amp; conditions</span>
+                        <span className="text-muted-foreground text-xs uppercase tracking-wider">Ticket Terms &amp; Conditions</span>
                         <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{snap.terms}</p>
                       </div>
                     )}

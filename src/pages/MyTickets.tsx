@@ -222,7 +222,7 @@ const TicketCard = ({ t }: { t: any }) => {
           {showTerms && terms && (
             <div className="mt-3 p-3 rounded-md bg-muted/40 border border-border/40">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
-                Ticket terms &amp; conditions
+                Ticket Terms &amp; Conditions
               </p>
               <p className="text-xs leading-relaxed whitespace-pre-wrap text-muted-foreground">
                 {terms}
@@ -314,7 +314,7 @@ const TicketCard = ({ t }: { t: any }) => {
           {terms && (
             <div style={{ padding: "0 32px 32px", borderTop: "1px solid #e2e8f0" }}>
               <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#64748b", margin: "16px 0 6px" }}>
-                Ticket terms &amp; conditions
+                Ticket Terms &amp; Conditions
               </p>
               <p style={{ fontSize: 11, lineHeight: 1.5, color: "#475569", whiteSpace: "pre-wrap", margin: 0 }}>
                 {terms}
