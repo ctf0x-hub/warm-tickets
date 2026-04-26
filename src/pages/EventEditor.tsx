@@ -35,6 +35,8 @@ const EventEditor = () => {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [types, setTypes] = useState<{ id: string; name: string }[]>([]);
   const [tags, setTags] = useState<{ id: string; name: string }[]>([]);
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
@@ -42,6 +44,7 @@ const EventEditor = () => {
   const [form, setForm] = useState({
     title: "",
     description: "",
+    terms: "",
     venue: "",
     city: "",
     starts_at: "",
