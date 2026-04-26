@@ -99,6 +99,7 @@ const EventEditor = () => {
       const payload: any = {
         title: form.title,
         description: form.description,
+        terms: form.terms || null,
         venue: form.venue,
         city: form.city,
         starts_at: new Date(form.starts_at).toISOString(),
