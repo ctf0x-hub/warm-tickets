@@ -90,15 +90,18 @@ const TicketCard = ({ t }: { t: any }) => {
     }
   };
 
+  const [imgFailed, setImgFailed] = useState(false);
+
   return (
     <Card className="overflow-hidden bg-gradient-card border-border/50 shadow-card">
-      {banner && (
-        <div className="relative h-40 sm:h-48 overflow-hidden">
+      {banner && !imgFailed && (
+        <div className="relative h-40 sm:h-48 overflow-hidden bg-muted">
           <img
             src={banner}
             alt={t.events?.title}
             className="w-full h-full object-cover"
-            crossOrigin="anonymous"
+            onError={() => setImgFailed(true)}
+            loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
           <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-3">
