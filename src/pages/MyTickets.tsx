@@ -200,12 +200,34 @@ const TicketCard = ({ t }: { t: any }) => {
               {showCode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               {showCode ? "Hide code" : "Show code"}
             </Button>
+            {terms && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowTerms((v) => !v)}
+              >
+                <FileText className="h-4 w-4" />
+                Terms
+                {showTerms ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            )}
           </div>
 
           {showCode && (
             <p className="text-xs text-muted-foreground mt-3 font-mono break-all select-all bg-muted/40 p-2 rounded-md">
               {t.qr_code}
             </p>
+          )}
+
+          {showTerms && terms && (
+            <div className="mt-3 p-3 rounded-md bg-muted/40 border border-border/40">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                Ticket terms &amp; conditions
+              </p>
+              <p className="text-xs leading-relaxed whitespace-pre-wrap text-muted-foreground">
+                {terms}
+              </p>
+            </div>
           )}
         </div>
 
