@@ -75,6 +75,7 @@ const EventEditor = () => {
         setForm({
           title: data.title,
           description: data.description ?? "",
+          terms: (data as any).terms ?? "",
           venue: data.venue ?? "",
           city: data.city ?? "",
           starts_at: data.starts_at?.slice(0, 16) ?? "",
