@@ -34,7 +34,7 @@ const AdminApprovals = () => {
     // 2) Orphan pending events (status set directly without a request row)
     const { data: orphanEvents, error: orphErr } = await supabase
       .from("events")
-      .select("id, title, slug, organizer_id, status, created_at, venue, city, starts_at, ends_at, description, banner_image")
+      .select("id, title, slug, organizer_id, status, created_at, venue, city, starts_at, ends_at, description, terms, banner_image")
       .in("status", ["pending_approval", "pending_edit_approval"])
       .is("deleted_at", null)
       .order("created_at", { ascending: true });
