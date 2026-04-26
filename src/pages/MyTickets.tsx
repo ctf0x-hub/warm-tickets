@@ -18,6 +18,9 @@ import {
   Share2,
   Ticket as TicketIcon,
   Clock,
+  FileText,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { format, isPast } from "date-fns";
 import { QRCodeSVG } from "qrcode.react";
