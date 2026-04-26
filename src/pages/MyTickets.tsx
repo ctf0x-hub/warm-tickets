@@ -18,6 +18,9 @@ import {
   Share2,
   Ticket as TicketIcon,
   Clock,
+  FileText,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { format, isPast } from "date-fns";
 import { QRCodeSVG } from "qrcode.react";
@@ -30,8 +33,10 @@ type Scan = { name: string | null; scanned_at: string };
 
 const TicketCard = ({ t }: { t: any }) => {
   const [showCode, setShowCode] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   const [busy, setBusy] = useState<"pdf" | "share" | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
+  const terms: string | null = t.events?.terms ?? null;
 
   const cancelled = t.status === "cancelled";
   const scans: Scan[] = (t.ticket_scans ?? [])
@@ -195,12 +200,34 @@ const TicketCard = ({ t }: { t: any }) => {
               {showCode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               {showCode ? "Hide code" : "Show code"}
             </Button>
+            {terms && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowTerms((v) => !v)}
+              >
+                <FileText className="h-4 w-4" />
+                Terms
+                {showTerms ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            )}
           </div>
 
           {showCode && (
             <p className="text-xs text-muted-foreground mt-3 font-mono break-all select-all bg-muted/40 p-2 rounded-md">
               {t.qr_code}
             </p>
+          )}
+
+          {showTerms && terms && (
+            <div className="mt-3 p-3 rounded-md bg-muted/40 border border-border/40">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                Ticket terms &amp; conditions
+              </p>
+              <p className="text-xs leading-relaxed whitespace-pre-wrap text-muted-foreground">
+                {terms}
+              </p>
+            </div>
           )}
         </div>
 
@@ -284,6 +311,16 @@ const TicketCard = ({ t }: { t: any }) => {
               </p>
             </div>
           </div>
+          {terms && (
+            <div style={{ padding: "0 32px 32px", borderTop: "1px solid #e2e8f0" }}>
+              <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#64748b", margin: "16px 0 6px" }}>
+                Ticket terms &amp; conditions
+              </p>
+              <p style={{ fontSize: 11, lineHeight: 1.5, color: "#475569", whiteSpace: "pre-wrap", margin: 0 }}>
+                {terms}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </Card>
@@ -300,7 +337,7 @@ const MyTickets = () => {
     supabase
       .from("tickets")
       .select(
-        "*, ticket_tiers(name, price_cents, currency), events(title, slug, starts_at, ends_at, venue, city, banner_image), ticket_scans(scanned_at, event_checkpoints(name))"
+        "*, ticket_tiers(name, price_cents, currency), events(title, slug, starts_at, ends_at, venue, city, banner_image, terms), ticket_scans(scanned_at, event_checkpoints(name))"
       )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
