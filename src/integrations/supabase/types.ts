@@ -297,6 +297,7 @@ export type Database = {
           slug: string
           starts_at: string
           status: Database["public"]["Enums"]["event_status"]
+          terms: string | null
           title: string
           type_id: string | null
           updated_at: string
@@ -316,6 +317,7 @@ export type Database = {
           slug: string
           starts_at: string
           status?: Database["public"]["Enums"]["event_status"]
+          terms?: string | null
           title: string
           type_id?: string | null
           updated_at?: string
@@ -335,6 +337,7 @@ export type Database = {
           slug?: string
           starts_at?: string
           status?: Database["public"]["Enums"]["event_status"]
+          terms?: string | null
           title?: string
           type_id?: string | null
           updated_at?: string

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { ImagePlus, Upload, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -34,6 +35,8 @@ const EventEditor = () => {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [types, setTypes] = useState<{ id: string; name: string }[]>([]);
   const [tags, setTags] = useState<{ id: string; name: string }[]>([]);
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
@@ -41,6 +44,7 @@ const EventEditor = () => {
   const [form, setForm] = useState({
     title: "",
     description: "",
+    terms: "",
     venue: "",
     city: "",
     starts_at: "",
@@ -71,6 +75,7 @@ const EventEditor = () => {
         setForm({
           title: data.title,
           description: data.description ?? "",
+          terms: (data as any).terms ?? "",
           venue: data.venue ?? "",
           city: data.city ?? "",
           starts_at: data.starts_at?.slice(0, 16) ?? "",
@@ -84,6 +89,72 @@ const EventEditor = () => {
       });
   }, [id, isNew, navigate]);
 
+  // Validate the file is a real, non-malformed image by decoding it client-side
+  const validateImageFile = async (file: File): Promise<{ width: number; height: number }> => {
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowed.includes(file.type)) {
+      throw new Error("Only JPG, PNG, WEBP, or GIF images are allowed");
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error("Image must be smaller than 5 MB");
+    }
+    if (file.size < 100) {
+      throw new Error("Image file is too small / empty");
+    }
+
+    // Sniff magic bytes to confirm declared type matches actual content
+    const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    const isJpeg = head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
+    const isPng =
+      head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47;
+    const isGif = head[0] === 0x47 && head[1] === 0x49 && head[2] === 0x46;
+    const isWebp =
+      head[0] === 0x52 && head[1] === 0x49 && head[2] === 0x46 && head[3] === 0x46 &&
+      head[8] === 0x57 && head[9] === 0x45 && head[10] === 0x42 && head[11] === 0x50;
+    if (!isJpeg && !isPng && !isGif && !isWebp) {
+      throw new Error("File contents do not look like a valid image");
+    }
+
+    // Decode it — this rejects truncated/corrupt images
+    const url = URL.createObjectURL(file);
+    try {
+      const dims = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        img.onerror = () => reject(new Error("Image is malformed or cannot be decoded"));
+        img.src = url;
+      });
+      if (dims.width < 200 || dims.height < 200) {
+        throw new Error("Image must be at least 200×200 pixels");
+      }
+      return dims;
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  const handleBannerUpload = async (file: File) => {
+    if (!user) return;
+    setUploading(true);
+    try {
+      await validateImageFile(file);
+      const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("event-banners")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("event-banners").getPublicUrl(path);
+      setForm((f) => ({ ...f, banner_image: data.publicUrl }));
+      toast.success("Banner uploaded");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleSave = async (asDraft = true) => {
     if (!user) return;
     if (!form.title || !form.starts_at || !form.ends_at) {
@@ -94,6 +165,7 @@ const EventEditor = () => {
       const payload: any = {
         title: form.title,
         description: form.description,
+        terms: form.terms || null,
         venue: form.venue,
         city: form.city,
         starts_at: new Date(form.starts_at).toISOString(),
@@ -231,6 +303,21 @@ const EventEditor = () => {
             />
           </div>
 
+          <div>
+            <Label htmlFor="terms">Ticket terms &amp; conditions / policy</Label>
+            <Textarea
+              id="terms"
+              rows={5}
+              value={form.terms}
+              onChange={(e) => setForm({ ...form, terms: e.target.value })}
+              placeholder="Refund policy, age restrictions, ID requirements, prohibited items, code of conduct…"
+              className="mt-1.5"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Shown to attendees on the event page and at checkout.
+            </p>
+          </div>
+
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="venue">Venue</Label>
@@ -276,14 +363,66 @@ const EventEditor = () => {
           </div>
 
           <div>
-            <Label htmlFor="banner">Banner image URL</Label>
-            <Input
-              id="banner"
-              value={form.banner_image}
-              onChange={(e) => setForm({ ...form, banner_image: e.target.value })}
-              placeholder="https://..."
-              className="mt-1.5"
+            <Label>Banner image</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleBannerUpload(f);
+              }}
             />
+            {form.banner_image ? (
+              <div className="mt-1.5 relative rounded-lg overflow-hidden border border-border/50 bg-muted">
+                <img
+                  src={form.banner_image}
+                  alt="Banner preview"
+                  className="w-full h-48 object-cover"
+                  onError={() => toast.error("Saved image failed to load")}
+                />
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    <span className="ml-1.5">Replace</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setForm({ ...form, banner_image: "" })}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="mt-1.5 w-full h-40 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary/60 hover:bg-muted/40 transition-smooth disabled:opacity-60"
+              >
+                {uploading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                ) : (
+                  <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                )}
+                <span className="text-sm text-muted-foreground">
+                  {uploading ? "Uploading…" : "Click to upload banner image"}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  JPG, PNG, WEBP or GIF · up to 5 MB · min 200×200
+                </span>
+              </button>
+            )}
           </div>
 
           <div>
