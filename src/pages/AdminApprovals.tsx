@@ -66,14 +66,15 @@ const AdminApprovals = () => {
     if (requestedIds.length) {
       const { data: evs } = await supabase
         .from("events")
-        .select("id, banner_image, venue, city, starts_at, ends_at, description, slug, title, status")
+        .select("id, banner_image, venue, city, starts_at, ends_at, description, terms, slug, title, status")
         .in("id", requestedIds);
       const byEvId = new Map((evs ?? []).map((e: any) => [e.id, e]));
       requested.forEach((r: any) => {
-        const e = byEvId.get(r.event_id);
+        const e: any = byEvId.get(r.event_id);
         if (e) {
           r.events = { ...(r.events || {}), ...e };
-          r.snapshot = { banner_image: e.banner_image, ...(r.snapshot || {}) };
+          // Prefer the snapshot value if present, else fall back to current event terms
+          r.snapshot = { banner_image: e.banner_image, terms: e.terms, ...(r.snapshot || {}) };
         }
       });
     }
