@@ -363,14 +363,66 @@ const EventEditor = () => {
           </div>
 
           <div>
-            <Label htmlFor="banner">Banner image URL</Label>
-            <Input
-              id="banner"
-              value={form.banner_image}
-              onChange={(e) => setForm({ ...form, banner_image: e.target.value })}
-              placeholder="https://..."
-              className="mt-1.5"
+            <Label>Banner image</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleBannerUpload(f);
+              }}
             />
+            {form.banner_image ? (
+              <div className="mt-1.5 relative rounded-lg overflow-hidden border border-border/50 bg-muted">
+                <img
+                  src={form.banner_image}
+                  alt="Banner preview"
+                  className="w-full h-48 object-cover"
+                  onError={() => toast.error("Saved image failed to load")}
+                />
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    <span className="ml-1.5">Replace</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setForm({ ...form, banner_image: "" })}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="mt-1.5 w-full h-40 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary/60 hover:bg-muted/40 transition-smooth disabled:opacity-60"
+              >
+                {uploading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                ) : (
+                  <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                )}
+                <span className="text-sm text-muted-foreground">
+                  {uploading ? "Uploading…" : "Click to upload banner image"}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  JPG, PNG, WEBP or GIF · up to 5 MB · min 200×200
+                </span>
+              </button>
+            )}
           </div>
 
           <div>
