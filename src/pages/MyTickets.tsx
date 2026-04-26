@@ -300,7 +300,7 @@ const MyTickets = () => {
     supabase
       .from("tickets")
       .select(
-        "*, ticket_tiers(name, price_cents, currency), events(title, slug, starts_at, ends_at, venue, city, banner_image), ticket_scans(scanned_at, event_checkpoints(name))"
+        "*, ticket_tiers(name, price_cents, currency), events(title, slug, starts_at, ends_at, venue, city, banner_image, terms), ticket_scans(scanned_at, event_checkpoints(name))"
       )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
