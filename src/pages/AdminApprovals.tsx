@@ -53,6 +53,7 @@ const AdminApprovals = () => {
           venue: e.venue, city: e.city,
           starts_at: e.starts_at, ends_at: e.ends_at,
           description: e.description,
+          terms: (e as any).terms,
           banner_image: e.banner_image,
         },
         events: { title: e.title, slug: e.slug, organizer_id: e.organizer_id, status: e.status, banner_image: e.banner_image },
