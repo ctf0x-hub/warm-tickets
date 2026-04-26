@@ -303,6 +303,21 @@ const EventEditor = () => {
             />
           </div>
 
+          <div>
+            <Label htmlFor="terms">Ticket terms &amp; conditions / policy</Label>
+            <Textarea
+              id="terms"
+              rows={5}
+              value={form.terms}
+              onChange={(e) => setForm({ ...form, terms: e.target.value })}
+              placeholder="Refund policy, age restrictions, ID requirements, prohibited items, code of conduct…"
+              className="mt-1.5"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Shown to attendees on the event page and at checkout.
+            </p>
+          </div>
+
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="venue">Venue</Label>
