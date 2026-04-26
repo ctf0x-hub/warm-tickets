@@ -124,8 +124,17 @@ const EventEditor = () => {
         img.onerror = () => reject(new Error("Image is malformed or cannot be decoded"));
         img.src = url;
       });
-      if (dims.width < 200 || dims.height < 200) {
-        throw new Error("Image must be at least 200×200 pixels");
+      // Enforce 1600×600 aspect ratio (8:3) with a small tolerance
+      const targetRatio = 1600 / 600;
+      const actualRatio = dims.width / dims.height;
+      const tolerance = 0.02; // ~2%
+      if (Math.abs(actualRatio - targetRatio) / targetRatio > tolerance) {
+        throw new Error(
+          `Image must have a 1600×600 aspect ratio (8:3). Yours is ${dims.width}×${dims.height}.`
+        );
+      }
+      if (dims.width < 1600 || dims.height < 600) {
+        throw new Error("Image must be at least 1600×600 pixels");
       }
       return dims;
     } finally {
