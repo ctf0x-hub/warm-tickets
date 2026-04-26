@@ -428,7 +428,7 @@ const EventEditor = () => {
                   {uploading ? "Uploading…" : "Click to upload banner image"}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  JPG, PNG, WEBP or GIF · up to 5 MB · min 200×200
+                  JPG, PNG, WEBP or GIF · up to 5 MB · required size 1600×600
                 </span>
               </button>
             )}
