@@ -311,6 +311,16 @@ const TicketCard = ({ t }: { t: any }) => {
               </p>
             </div>
           </div>
+          {terms && (
+            <div style={{ padding: "0 32px 32px", borderTop: "1px solid #e2e8f0" }}>
+              <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#64748b", margin: "16px 0 6px" }}>
+                Ticket terms &amp; conditions
+              </p>
+              <p style={{ fontSize: 11, lineHeight: 1.5, color: "#475569", whiteSpace: "pre-wrap", margin: 0 }}>
+                {terms}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </Card>
