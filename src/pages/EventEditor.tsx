@@ -89,6 +89,72 @@ const EventEditor = () => {
       });
   }, [id, isNew, navigate]);
 
+  // Validate the file is a real, non-malformed image by decoding it client-side
+  const validateImageFile = async (file: File): Promise<{ width: number; height: number }> => {
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowed.includes(file.type)) {
+      throw new Error("Only JPG, PNG, WEBP, or GIF images are allowed");
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error("Image must be smaller than 5 MB");
+    }
+    if (file.size < 100) {
+      throw new Error("Image file is too small / empty");
+    }
+
+    // Sniff magic bytes to confirm declared type matches actual content
+    const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    const isJpeg = head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
+    const isPng =
+      head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47;
+    const isGif = head[0] === 0x47 && head[1] === 0x49 && head[2] === 0x46;
+    const isWebp =
+      head[0] === 0x52 && head[1] === 0x49 && head[2] === 0x46 && head[3] === 0x46 &&
+      head[8] === 0x57 && head[9] === 0x45 && head[10] === 0x42 && head[11] === 0x50;
+    if (!isJpeg && !isPng && !isGif && !isWebp) {
+      throw new Error("File contents do not look like a valid image");
+    }
+
+    // Decode it — this rejects truncated/corrupt images
+    const url = URL.createObjectURL(file);
+    try {
+      const dims = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        img.onerror = () => reject(new Error("Image is malformed or cannot be decoded"));
+        img.src = url;
+      });
+      if (dims.width < 200 || dims.height < 200) {
+        throw new Error("Image must be at least 200×200 pixels");
+      }
+      return dims;
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  const handleBannerUpload = async (file: File) => {
+    if (!user) return;
+    setUploading(true);
+    try {
+      await validateImageFile(file);
+      const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("event-banners")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("event-banners").getPublicUrl(path);
+      setForm((f) => ({ ...f, banner_image: data.publicUrl }));
+      toast.success("Banner uploaded");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleSave = async (asDraft = true) => {
     if (!user) return;
     if (!form.title || !form.starts_at || !form.ends_at) {
