@@ -224,6 +224,12 @@ const AdminApprovals = () => {
                         <p className="mt-1 whitespace-pre-wrap">{snap.description}</p>
                       </div>
                     )}
+                    {snap.terms && (
+                      <div className="sm:col-span-2 pt-2 border-t border-border/40">
+                        <span className="text-muted-foreground text-xs uppercase tracking-wider">Ticket terms &amp; conditions</span>
+                        <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{snap.terms}</p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mb-4">
